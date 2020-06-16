@@ -50,3 +50,41 @@ Extraction_Log_final = function(path_to_Log_file) {
   
   return(List_elements)
 }
+
+## ---------------------------------------------------------------
+## Function to compute similarity between genome sequences
+
+alignement_score <- function(x) { # x is a vector of sequences in the Biostring format (DNAstring format)
+  dist_matrix = matrix(0,nrow = length(x),ncol = length(x))
+  comparison_sequence = c()
+  for (i in 1:nrow(dist_matrix)){
+    for (j in 1:ncol(dist_matrix)) {
+      dist_matrix[i,j] = pairwiseAlignment(pattern = x[i], subject = x[j], type = "local-global", substitutionMatrix = nucleotideSubstitutionMatrix(match = 1, mismatch = 0, baseOnly = FALSE, type = "DNA") , gapOpening = 1, gapExtension = 0, scoreOnly=TRUE)
+    }
+  }
+  dist_matrix = -dist_matrix
+  rownames(dist_matrix) = names(x)
+  colnames(dist_matrix) = names(x)
+  return(dist_matrix)
+}
+
+string.to.colors = function (string, colors = NULL) 
+{
+  if (is.factor(string)) {
+    string = as.character(string)
+  }
+  if (!is.null(colors)) {
+    if (length(colors) != length(unique(string))) {
+      (break)("The number of colors must be equal to the number of unique elements.")
+    }
+    else {
+      conv = cbind(unique(string), colors)
+    }
+  }
+  else {
+    conv = cbind(unique(string), rainbow(length(unique(string))))
+  }
+  unlist(lapply(string, FUN = function(x) {
+    conv[which(conv[, 1] == x), 2]
+  }))
+}
