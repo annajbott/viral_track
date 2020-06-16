@@ -7,5 +7,9 @@ option_list <- list(
   make_option(c("-m", "--minimal_read_mapping"), action="store", type="integer", default=50, help="Minimal threshold of Viral Mapping Reads [default]"),
   make_option(c("-b", "--bins_bam_sorting"), action="store", type="integer", default=60, help="outBAMsortingBinsN for STAR Mapping [default]"),
   make_option(c("-f", "--fastq_file"), action="store", type="character", help="Input Fastq file [default]"),
-  make_option(c("-r", "--run_name"), action="store", type="character", default="Viral_Track", help="Run Name [default]")
+  make_option(c("-r", "--run_name"), action="store", type="character", default="Viral_Track", help="Run Name [default]"),
+  make_option(c("-v", "--viral_annotation"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt", help="Location of VirusSite annotation file [default]")
 )
+
+parse_args(object, args = commandArgs(trailingOnly = TRUE), print_help_and_exit = TRUE, positional_arguments = FALSE, convert_hyphens_to_underscores = FALSE)
+
