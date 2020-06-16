@@ -1,0 +1,45 @@
+parser <- OptionParser()
+option_list <- list( 
+  make_option(c("-n", "--nThreadmap"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
+  make_option(c("-o", "--outputdir"), action="store", default='/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK', type="character", help="Path to output directory"),
+  make_option(c("-i", "--indexgenome"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/", help="Path to VIRAL TRACK reference genome [default]"),
+  make_option(c("-s", "--nThreadsort"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
+  make_option(c("-m", "--minreads"), action="store", type="integer", default=50, help="Minimum number of mapped viral reads [default]"),
+  make_option(c("-b", "--bins"), action="store", type="integer", default=60, help="outBAMsortingBinsN for STAR Mapping [default]"),
+  make_option(c("-f", "--fastq"), action="store", type="character", help="Path to input FASTQ file [default]"),
+  make_option(c("-r", "--runname"), action="store", type="character", default="Viral_Track", help="Run Name [default]"),
+  make_option(c("-v", "--viralannotation"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt", help="Path to VirusSite annotation file [default]")
+)
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
+
+if (is.null(opt$fastq)){
+  stop("No FASTq file provided. Terminating. \n", call.=FALSE)
+}
+if (is.null(opt$outputdir)){
+  stop("Output directory not present: must be specified. Terminating. \n", call.=FALSE)
+}
+if (opt$runname == "Viral_Track"){
+  cat("Using Default Run-Name: Reconsider using Custom Run-name. \n")
+}
+if (!dir.exists(opt$outputdir)) {
+  warning("Output directory does not exist! Creating it! \n")
+  dir.create(opt$outputdir)
+}
+if (!is.numeric(opt$nThreadmap) | opt$nThreadmap < 1 ) {
+  stop("STAR Mapping Threads are Incorrect. Terminating. \n")
+}
+if (!is.numeric(opt$nThreadsort)) {
+  stop("STAR BAM Sorting Threads are incorrect. Terminating. \n")
+}
+if (opt$nThreadsort > 1 ) {
+  cat("STAR BAM Sorting Threads are higher than recommended (Default: 1). Consider adjusting paramaters.  \n")
+}
+if (!dir.exists(opt$indexgenome)) {
+  stop("Index Genome Directory Does Not Exist. Terminating. \n")
+}
+if (!file.exists(opt$viralannotation)) {
+  stop("VirusSite Database File Does Not Exist. Terminating. \n")
+}
+
