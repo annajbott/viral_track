@@ -1,0 +1,11 @@
+parser <- OptionParser()
+option_list <- list( 
+  make_option(c("-n", "--nThread_Mapping"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
+  make_option(c("-o", "--output_directory"), action="store", type="character", help="Output directory"),
+  make_option(c("-i", "--index_genome_location"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/", help="Location of VIRAL TRACK reference genome [default]"),
+  make_option(c("-t", "--threads_BamSorting"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
+  make_option(c("-m", "--minimal_read_mapping"), action="store", type="integer", default=50, help="Minimal threshold of Viral Mapping Reads [default]"),
+  make_option(c("-b", "--bins_bam_sorting"), action="store", type="integer", default=60, help="outBAMsortingBinsN for STAR Mapping [default]"),
+  make_option(c("-f", "--fastq_file"), action="store", type="character", help="Input Fastq file [default]"),
+  make_option(c("-r", "--run_name"), action="store", type="character", default="Viral_Track", help="Run Name [default]")
+)
