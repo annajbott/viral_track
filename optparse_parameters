@@ -1,17 +1,26 @@
-library(optparse)
 parser <- OptionParser()
 option_list <- list( 
-  make_option(c("-n", "--nThread_map"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
-  make_option(c("-o", "--output_dir"), action="store", type="character", help="Path to output directory"),
-  make_option(c("-i", "--index_genome"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/", help="Path to VIRAL TRACK reference genome [default]"),
-  make_option(c("-s", "--nThreads_sort"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
-  make_option(c("-m", "--minimal_reads"), action="store", type="integer", default=50, help="Minimum number of mapped viral reads [default]"),
+  make_option(c("-n", "--nThreadmap"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
+  make_option(c("-o", "--outputdir"), action="store", type="character", help="Path to output directory"),
+  make_option(c("-i", "--indexgenome"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/", help="Path to VIRAL TRACK reference genome [default]"),
+  make_option(c("-s", "--nThreadsort"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
+  make_option(c("-m", "--minreads"), action="store", type="integer", default=50, help="Minimum number of mapped viral reads [default]"),
   make_option(c("-b", "--bins"), action="store", type="integer", default=60, help="outBAMsortingBinsN for STAR Mapping [default]"),
   make_option(c("-f", "--fastq"), action="store", type="character", help="Path to input FASTQ file [default]"),
-  make_option(c("-r", "--run_name"), action="store", type="character", default="Viral_Track", help="Run Name [default]"),
-  make_option(c("-v", "--viral_annotation"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt", help="Path to VirusSite annotation file [default]")
+  make_option(c("-r", "--runname"), action="store", type="character", default="Viral_Track", help="Run Name [default]"),
+  make_option(c("-v", "--viralannotation"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt", help="Path to VirusSite annotation file [default]")
 )
 
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
 
-parse_args(object, args = commandArgs(trailingOnly = TRUE), print_help_and_exit = TRUE, positional_arguments = FALSE, convert_hyphens_to_underscores = FALSE)
+if (is.null(opt$fastq)){
+  stop("No FASTq file provided", call.=FALSE)
+}
+if (is.null(opt$outputdir)){
+  stop("Output directory not present: must be specified", call.=FALSE)
+}
+if (opt$runname == "Viral_Track"){
+  cat("Using default Run-Name: reconsider using custom runname")
+}
 
