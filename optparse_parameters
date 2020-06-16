@@ -1,3 +1,4 @@
+
 parser <- OptionParser()
 option_list <- list( 
   make_option(c("-n", "--nThreadmap"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
@@ -6,7 +7,7 @@ option_list <- list(
   make_option(c("-s", "--nThreadsort"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
   make_option(c("-m", "--minreads"), action="store", type="integer", default=50, help="Minimum number of mapped viral reads [default]"),
   make_option(c("-b", "--bins"), action="store", type="integer", default=60, help="outBAMsortingBinsN for STAR Mapping [default]"),
-  make_option(c("-f", "--fastq"), action="store", type="character", help="Path to input FASTQ file [default]"),
+  make_option(c("-f", "--fastq"), action="store", type="character", default = '/well/immune-rep/shared/10X_GENOMICS/EBV_LCLS/FASTQ/SRR8427168/DOWNSAMPLES/sub10k.fa', help="Path to input FASTQ file [default]"),
   make_option(c("-r", "--runname"), action="store", type="character", default="Viral_Track", help="Run Name [default]"),
   make_option(c("-v", "--viralannotation"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt", help="Path to VirusSite annotation file [default]")
 )
@@ -21,7 +22,7 @@ if (is.null(opt$outputdir)){
   stop("Output directory not present: must be specified. Terminating. \n", call.=FALSE)
 }
 if (opt$runname == "Viral_Track"){
-  cat("Using Default Run-Name: Reconsider using Custom Run-name. \n")
+  cat("Using Default Run-Name: Reconsider using Custom Run-Name. \n")
 }
 if (!dir.exists(opt$outputdir)) {
   warning("Output directory does not exist! Creating it! \n")
@@ -41,5 +42,26 @@ if (!dir.exists(opt$indexgenome)) {
 }
 if (!file.exists(opt$viralannotation)) {
   stop("VirusSite Database File Does Not Exist. Terminating. \n")
+}
+
+if (opt$nThreadmap >= round(0.8*detectCores(),0) ) {
+  stop("Not enough threads available. Terminating. \n")
+}
+
+List_target_path = c()
+if (!is.null(opt$fastq)) {
+  if(file.exists(opt$fastq)){
+    cat("FATSQ File present. \n") 
+    if(any(grepl(".fa|.fq|.fasta", opt$fastq))==TRUE){
+      cat("FASTQ File Type is Valid. \n")
+      List_target_path = opt$fastq
+    } else {
+      stop("Fastq File Provided is Not of Type '.fasta/.fq/.fa'. Terminating. \n")
+    }
+  } else {
+    stop("FASTQ provided but Path is Invalid. Terminating. \n")
+  }
+} else {
+   stop("No FASTQ File Provided. Terminating \n")
 }
 
