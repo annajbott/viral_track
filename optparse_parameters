@@ -1,4 +1,7 @@
-
+if(nzchar(system.file(package = "optparse"))==FALSE){
+  stop("optparse not installed. Terminating. \n")
+}
+suppressMessages(library(optparse))
 parser <- OptionParser()
 option_list <- list( 
   make_option(c("-n", "--nThreadmap"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
@@ -22,7 +25,7 @@ if (is.null(opt$outputdir)){
   stop("Output directory not present: must be specified. Terminating. \n", call.=FALSE)
 }
 if (opt$runname == "Viral_Track"){
-  cat("Using Default Run-Name: Reconsider using Custom Run-Name. \n")
+  warning("Using Default Run-Name: Reconsider using Custom Run-Name. \n")
 }
 if (!dir.exists(opt$outputdir)) {
   warning("Output directory does not exist! Creating it! \n")
@@ -47,7 +50,25 @@ if (!file.exists(opt$viralannotation)) {
 if (opt$nThreadmap >= round(0.8*detectCores(),0) ) {
   stop("Not enough threads available. Terminating. \n")
 }
+if (opt$nThreadsort > opt$nThreadmap ) {
+  warning("Bam Sorting Threads exceeds Bam Mapping Threads. May be incompatible with memory request. \n")
+}
 
+## Check all packages are installed. 
+if(nzchar(system.file(package = "Biostrings"))==FALSE){
+  stop("Biostrings not installed. Terminating. \n")
+} 
+if(nzchar(system.file(package = "ShortRead"))==FALSE){
+  stop("ShortRead not installed. Terminating. \n")
+}
+if(nzchar(system.file(package = "doParallel"))==FALSE){
+  stop("doParallel not installed. Terminating. \n")
+}
+if(nzchar(system.file(package = "GenomicAlignments"))==FALSE){
+  stop("GenomicAlignments not installed. Terminating. \n")
+}
+
+## Check validity of FASTQ File
 List_target_path = c()
 if (!is.null(opt$fastq)) {
   if(file.exists(opt$fastq)){
@@ -64,4 +85,42 @@ if (!is.null(opt$fastq)) {
 } else {
    stop("No FASTQ File Provided. Terminating \n")
 }
+
+## Load Required Libraries
+suppressMessages(library(Biostrings))
+suppressMessages(library(ShortRead))
+suppressMessages(library(doParallel))
+suppressMessages(library(GenomicAlignments))
+
+## Setting up log.file: 
+log <-  paste0(opt$outputdir, "/ViralTrack_Scanning_", opt$runname, ".log")
+
+## Checking the parameters values
+cat("ViralTrack_Scanning.2.0 by lauren_overend & Pierre Bost \n", file=log, append=TRUE)
+cat(paste0("Run Name: ", opt$runname, "\n"), file=log, append=TRUE)
+start_time <- Sys.time()
+cat(paste0("Start time: ", start_time, "\n"), file=log, append=TRUE)
+cat(paste0("Output directory: ", opt$outputdir, "\n"), file=log, append=TRUE)
+cat(paste0("FASTQ File: ", opt$fastq, "\n"), file=log, append=TRUE)
+cat("----------------------------------------------\n", file=log, append=TRUE)
+cat("Input Parameters Read and Validated. Commencing Viral Track. \n", file=log, append = TRUE)
+
+
+##--------------------------------------------------------------
+## Renaming Paramaters to original variable names as in ViralTrack1.0
+N_thread = opt$nThreadmap 
+N_thread_sort = opt$nThreadsort
+Output_directory = opt$outputdir 
+Name_run = opt$runname    
+Index_genome = opt$indexgenome 
+Minimal_read_mapped = as.numeric(opt$minreads)
+Viral_annotation_file = opt$viralannotation
+## ---------------------------------------------------------------
+
+##Registering the parallel environment
+cat('Setting up parallel environment. \n', file=log, append = TRUE)
+cl=makeCluster(N_thread)
+registerDoParallel(cl)
+cat('Parallel environment established. \n', file=log, append = TRUE)
+
 
