@@ -136,14 +136,12 @@ Viral_annotation_file = opt$viralannotation
 ## ------------------------------------------------------------------------------------
 ## Mapping: 
 ## Cleaning up file names: 
-List_output_path = c()
 name_target = unlist(base::strsplit(List_target_path,"/",fixed = T))
 name_target = name_target[length(name_target)]
 name_target = gsub('/','',name_target)
 is_gz_file = any(grepl(pattern = ".gz",name_target))
 name_target = gsub('.fastq|.fa|.fq|.gz','',name_target)   #Cleaning the name to get the original Amplification batch number
 temp_output_dir = paste(Output_directory, "/", name_target,sep = "")
-List_output_path = c(List_output_path,temp_output_dir)
 dir.create(temp_output_dir)
 cat(paste0("Mapping: ",name_target,".fastq file \n"), file=log, append = TRUE)
 start_time <- Sys.time()
