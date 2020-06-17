@@ -38,7 +38,7 @@ if (!is.numeric(opt$nThreadsort)) {
   stop("STAR BAM Sorting Threads are incorrect. Terminating. \n")
 }
 if (opt$nThreadsort > 1 ) {
-  cat("STAR BAM Sorting Threads are higher than recommended (Default: 1). Consider adjusting paramaters.  \n")
+  warning("STAR BAM Sorting Threads are higher than recommended (Default: 1). Consider adjusting paramaters.  \n")
 }
 if (!dir.exists(opt$indexgenome)) {
   stop("Index Genome Directory Does Not Exist. Terminating. \n")
