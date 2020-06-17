@@ -5,7 +5,7 @@ suppressMessages(library(optparse))
 parser <- OptionParser()
 option_list <- list( 
   make_option(c("-n", "--nThreadmap"), action="store", default=8, type="integer", help="runThreadN for Star Mapping [default]"),
-  make_option(c("-o", "--outputdir"), action="store", default='/well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK', type="character", help="Path to output directory"),
+  make_option(c("-o", "--outputdir"), action="store", default='/well/immune-rep/users/kvi236/VIRUS/TEST', type="character", help="Path to output directory"),
   make_option(c("-i", "--indexgenome"), action="store", type="character", default="/well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/", help="Path to VIRAL TRACK reference genome [default]"),
   make_option(c("-s", "--nThreadsort"), action="store", type="integer", default=1, help="outBAMsortingThreadN for STAR Mapping [default] - usually < runThreadN"),
   make_option(c("-m", "--minreads"), action="store", type="integer", default=50, help="Minimum number of mapped viral reads [default]"),
@@ -83,7 +83,7 @@ if (!is.null(opt$fastq)) {
     stop("FASTQ provided but Path is Invalid. Terminating. \n")
   }
 } else {
-   stop("No FASTQ File Provided. Terminating \n")
+   stop("No FASTQ File Provided. Terminating. \n")
 }
 
 ## Load Required Libraries
@@ -110,17 +110,57 @@ cat("Input Parameters Read and Validated. Commencing Viral Track. \n", file=log,
 ## Renaming Paramaters to original variable names as in ViralTrack1.0
 N_thread = opt$nThreadmap 
 N_thread_sort = opt$nThreadsort
+N_bins = opt$bins
 Output_directory = opt$outputdir 
 Name_run = opt$runname    
 Index_genome = opt$indexgenome 
 Minimal_read_mapped = as.numeric(opt$minreads)
 Viral_annotation_file = opt$viralannotation
-## ---------------------------------------------------------------
 
-##Registering the parallel environment
-cat('Setting up parallel environment. \n', file=log, append = TRUE)
-cl=makeCluster(N_thread)
-registerDoParallel(cl)
-cat('Parallel environment established. \n', file=log, append = TRUE)
+## ---------------------------------------------------------------
+## ------------------------------------------------------------------------------------
+## Mapping: 
+
+cat("Commencing Mapping. \n", file="Viral_track_scanning.log", append = TRUE)
+#For each Fastq file a sub-directory is created
+#It will contains the SAM file as well as the final log file 
+cat("For each Fastq file a new sub-directory will be created containing output files \n", file="Viral_track_scanning.log", append = TRUE)
+
+## Cleaning up file names: 
+List_output_path = c()
+name_target = unlist(base::strsplit(List_target_path,"/",fixed = T))
+name_target = name_target[length(name_target)]
+name_target = gsub('/','',name_target)
+is_gz_file = any(grepl(pattern = ".gz",name_target))
+name_target = gsub('.fastq|.fa|.fq|.gz','',name_target)   #Cleaning the name to get the original Amplification batch number
+temp_output_dir = paste(Output_directory, "/", name_target,sep = "")
+List_output_path = c(List_output_path,temp_output_dir)
+dir.create(temp_output_dir)
+cat(paste0("Mapping: ",name_target,".fastq file \n"), file=log, append = TRUE)
+start_time <- Sys.time()
+cat(paste0("Start time: ", start_time, "\n"), file=log, append=TRUE)
+name_prefix = paste0(temp_output_dir, "/", name_target)
+  
+#We construct a complex command 
+STAR_mapping_command = paste("STAR --runThreadN",N_thread,"--outBAMsortingThreadN",N_thread_sort,"--outBAMsortingBinsN", N_bins, "--genomeDir",Index_genome,"--readFilesIn", List_target_path,"--outSAMattributes NH HI AS nM NM XS",
+                               "--outFileNamePrefix",name_prefix,"--outSAMtype BAM SortedByCoordinate --twopassMode Basic",
+                               "--outFilterMatchNmin 35 --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6")
+
+#If the file is in the format .gz then we need to add an additional paramter :
+if (is_gz_file==TRUE) {
+    STAR_mapping_command = paste(STAR_mapping_command, "--readFilesCommand zcat", sep=" ") #Allowing to read .gz files
+    }
+## Launching STAR COMMAND
+system(STAR_mapping_command)
+end_time <- Sys.time()
+## DOCUMENTING 
+cat(paste("USER SPECIFIED STAR MAPPING COMMAND PARAMETERS:", "\n"), file=log, append=TRUE)
+cat(paste("--runThreadN:", N_thread, "\n"), file=log, append=TRUE)
+cat(paste("--outBAMsortingThreadN:", N_thread_sort, "\n"), file=log, append=TRUE)
+cat(paste("--outBAMsortingBinsN:", N_bins, "\n"), file=log, append=TRUE)
+cat(paste0("End time: ", end_time, "\n"), file=log, append=TRUE)
+cat(paste0("Mapping: ",name_target,".fastq DONE! \n"), file=log, append = TRUE)
+
+
 
 
