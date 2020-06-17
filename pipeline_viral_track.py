@@ -80,26 +80,62 @@ def STAR_map(infile, outfile):
     index_genome = PARAMS['genome_dir']
     min_reads = PARAMS['star_minreads']
     prefix = outfile.replace("Aligned.sortedByCoord.out.bam", "")
+    log_file = outfile.replace(".bam", ".log")
     
     if infile.endswith(".gz"):
         gunzip = "--readFilesCommand zcat"
     else:
         gunzip = ""
 
+
+    if int(PARAMS['star_nThreadsort']) > int(PARAMS['star_nThreads']):
+        E.warn("nThreadsort should not be greater than the number of threads for STAR mapping")
+
     
 
     statement = ''' STAR --runThreadN %(nthreads)s --outBAMsortingThreadN %(nBAMsortingthreads)s --outBAMsortingBinsN %(nBins)s 
                 --genomeDir %(index_genome)s --readFilesIn %(infile)s --outSAMattributes NH HI AS nM NM XS 
                 --outSAMtype BAM SortedByCoordinate --twopassMode Basic --outFilterMatchNmin 35 
-                --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6 --outFileNamePrefix %(prefix)s %(gunzip)s
+                --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6 --outFileNamePrefix %(prefix)s %(gunzip)s > %(log_file)s
                 '''
 
     job_memory = "70G"
 
     P.run(statement)
 
+@transform(STAR_map,
+           regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
+           r"STAR.dir/\1/\1_<whatever_file_suffix_is>.bam")
+def samtools_index(infile, outfile):
+    '''
+    Index bam file using samtools
+    '''
 
-@follows(STAR_map)
+    #log_file = outfile.replace(".bam",".log")
+
+    statement = '''samtools index %(infile)s '''
+
+    job_memory = "20G"
+
+    P.run(statement)
+
+
+@transform(STAR_map,
+           regex("(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
+           r"\1/\1_Count_chromsomes.txt")
+def samtools_chromosome_count(infile, outfile):
+    ''' 
+    Compute the number of mapped reads for each chromosome/virus
+    '''
+
+    statement = '''samtools idxstats %(infile)s > %(outfile)s'''
+
+    job.memory = "20G"
+
+    P.run(statement)
+
+
+@follows(STAR_map, samtools_index, samtools_chromosome_count)
 def full():
     '''
     Runs everything
