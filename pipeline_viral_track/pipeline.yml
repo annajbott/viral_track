@@ -1,0 +1,32 @@
+#################
+#
+# Configuration file for pipiline_viral_track
+#
+#################
+
+
+genome_dir: /well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/
+
+# data = 0 implies fastq files in current directory. Data = 1: data stored in data.dir folder
+data = 0
+
+################
+# STAR Mapping
+################
+
+star:
+
+  # Number of threads to run STAR with
+  nThreads: 8
+
+  # outBAMsortingThreadN for star mapping, usually fewer than total threads
+  nThreadsort: 1
+
+  # Number bins
+  bins: 60
+
+  # Minimum number of mapped viral reads
+  minreads: 50
+  
+
+  
