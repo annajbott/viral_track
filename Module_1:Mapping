@@ -1,3 +1,18 @@
+## ---------------------------
+## Script name: VIRAL TRACK: Viral_Scanning: Module 1 - MAPPING
+## Function: Map Single Cell Virals from individual FASTQ file using STAR.
+## Author: Pierre Bost (as used in Viral TRACK paper). Updated by Lauren Overend (LEO)
+##
+## Date Created: 2020 - June 
+##
+## Email: lauren.overend@oriel.ox.ac.uk
+##
+## ---------------------------
+##
+## Notes:
+##   
+##
+## ---------------------------
 if(nzchar(system.file(package = "optparse"))==FALSE){
   stop("optparse not installed. Terminating. \n")
 }
@@ -93,10 +108,10 @@ suppressMessages(library(doParallel))
 suppressMessages(library(GenomicAlignments))
 
 ## Setting up log.file: 
-log <-  paste0(opt$outputdir, "/ViralTrack_Scanning_", opt$runname, ".log")
+log <-  paste0(opt$outputdir, "/ViralTrack_Scanning_Module1_", opt$runname, ".log")
 
 ## Checking the parameters values
-cat("ViralTrack_Scanning.2.0 by lauren_overend & Pierre Bost \n", file=log, append=TRUE)
+cat("ViralTrack_Scanning.2.0 by Lauren Overend & Pierre Bost \n", file=log, append=TRUE)
 cat(paste0("Run Name: ", opt$runname, "\n"), file=log, append=TRUE)
 start_time <- Sys.time()
 cat(paste0("Start time: ", start_time, "\n"), file=log, append=TRUE)
@@ -120,12 +135,6 @@ Viral_annotation_file = opt$viralannotation
 ## ---------------------------------------------------------------
 ## ------------------------------------------------------------------------------------
 ## Mapping: 
-
-cat("Commencing Mapping. \n", file="Viral_track_scanning.log", append = TRUE)
-#For each Fastq file a sub-directory is created
-#It will contains the SAM file as well as the final log file 
-cat("For each Fastq file a new sub-directory will be created containing output files \n", file="Viral_track_scanning.log", append = TRUE)
-
 ## Cleaning up file names: 
 List_output_path = c()
 name_target = unlist(base::strsplit(List_target_path,"/",fixed = T))
@@ -160,7 +169,4 @@ cat(paste("--outBAMsortingThreadN:", N_thread_sort, "\n"), file=log, append=TRUE
 cat(paste("--outBAMsortingBinsN:", N_bins, "\n"), file=log, append=TRUE)
 cat(paste0("End time: ", end_time, "\n"), file=log, append=TRUE)
 cat(paste0("Mapping: ",name_target,".fastq DONE! \n"), file=log, append = TRUE)
-
-
-
-
+### ------------------------------------------------------------------------------------
