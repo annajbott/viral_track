@@ -108,7 +108,7 @@ suppressMessages(library(doParallel))
 suppressMessages(library(GenomicAlignments))
 
 ## Setting up log.file: 
-log <-  paste0(opt$outputdir, "/ViralTrack_Scanning_Module1_", opt$runname, ".log")
+log <-  paste0(opt$outputdir, "/ViralTrack_Scanning_Module1_", opt$fastq, ".log")
 
 ## Checking the parameters values
 cat("ViralTrack_Scanning.2.0 by Lauren Overend & Pierre Bost \n", file=log, append=TRUE)
