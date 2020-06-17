@@ -23,7 +23,7 @@ star:
   nThreadsort: 1
 
   # Number bins
-  bins: 60
+  bins: 50
 
   # Minimum number of mapped viral reads
   minreads: 50
