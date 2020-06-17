@@ -137,24 +137,20 @@ name_target = gsub('/','',name_target)
 is_gz_file = any(grepl(pattern = ".gz",name_target))
 name_target = gsub('.fastq|.fa|.fq|.gz','',name_target)   #Cleaning the name to get the original Amplification batch number
 temp_output_dir = paste(Output_directory, "/", name_target,sep = "")
-dir.create(temp_output_dir)
-cat(paste0("Mapping: ",name_target,".fastq file \n"), file=log, append = TRUE)
-start_time <- Sys.time()
-cat(paste0("Start time: ", start_time, "\n"), file=log, append=TRUE)
+name_prefix = paste0(temp_output_dir, "/", name_target)
+## ----------------------------------------------------------------------
+## Input File
 name_prefix = paste0(temp_output_dir, "/", name_target)
 temp_sorted_bam = paste0(name_prefix, "Aligned.sortedByCoord.out.bam")
-## -------------------------------------------------------------- 
-## --------------------------------------------------------------  
-
+#-------------------------------------------------------------- 
 #To begin with : the ordered .BAM file need to indexed
+
 SAMtools_indexing_command = paste("samtools index",temp_sorted_bam)
 system(SAMtools_indexing_command)
-cat(paste0("Indexing of the bam file for",name_target,"is done \n"), file="Viral_track_scanning.log", append = TRUE)
+cat(paste0("Indexing of the Bam File for",name_target,"is done. \n"), file=log, append = TRUE)
 #Then we need to compute the number of mapped reads for each chromosome/virus
 temp_chromosome_count_path = paste(temp_output_dir,"/Count_chromosomes.txt",sep = "")
 SAMtools_chromosome_count_command = paste("samtools idxstats",temp_sorted_bam,">",temp_chromosome_count_path)
 system(SAMtools_chromosome_count_command)
-cat(paste0("Computing stat file for the bam file for",name_target,"is done \n"), file="Viral_track_scanning.log", append = TRUE)  
+cat(paste0("Computing stat file for the bam file for",name_target,"is done. \n"), file=log, append = TRUE)  
 ## ---------------------------------------------------------------------------------------------------------------
-
-
