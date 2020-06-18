@@ -3,7 +3,6 @@ library(optparse)
 parser <- OptionParser()
 option_list <- list(
     make_option(c("-c", "--chromsomeCount"), action="store", type="character", help="Path to <sample>_Count_chromosomes.txt"),
-    make_option(c("-b", "--alignedBAM"), action="store", type="character", help="Path to <sample>_Aligned.sortedByCoord.out.bam"),
     make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral BAM files"),
     make_option(c("-m", "--minreads", action="store", type="integer", default = 50, help="Minimum number of mapped viral reads, default = [default]")
 )
@@ -13,13 +12,11 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
 chromosome_count_path <- opt$chromsomeCount
-bam_path <- opt$alignedBAM
 outdir <- opt$outdir
 minreads <- opt$minreads
 
 
 temp_chromosome_count = read.table(chromosome_count_path,header = F,row.names = 1)colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
-colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
 
 Chromosome_to_remove = c("1","10","11","12","13","14","15","16","17","18","19","2","20","21","22","3","4","5","6","7","8","9","MT","X","Y",
                           "KI270728.1","KI270727.1","KI270442.1","KI270729.1","GL000225.1","KI270743.1","GL000008.2","GL000009.2",
@@ -49,7 +46,7 @@ temp_chromosome_count = temp_chromosome_count[temp_chromosome_count$Mapped_reads
 write.csv(temp_chromosome_count, paste(outdir, "/Virus_chromosomes_count_filtered.csv", row.names = TRUE)
 
 # Create empty file with virus name as file name 
-for(virus in rownames(temp_chromosome_count){
+for(virus in rownames(temp_chromosome_count)){
     file_name = paste(outdir, "/", virus, ".txt", sep = "")
     file.create(file_name)
 }

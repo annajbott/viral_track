@@ -139,7 +139,6 @@ def samtools_chromosome_count(infile, outfile):
 
 @split(samtoools_chromosome_count, 
            regex("(\S+)/(\S+)_Count_chrosomes.txt"),
-           add_inputs(samtoools_chromosome_count),
            r"\1/Viral_BAM_files/virus_file_names/*.txt")
 def viral_filter(infiles, outfile):
     '''
@@ -147,7 +146,7 @@ def viral_filter(infiles, outfile):
     under threshold number of reads, then create empty txt file for each virus 
     '''
 
-    aligned_bam, chromosome_count = infiles
+    chromosome_count = infile
     BAM_folder = os.path.dirname(os.path.dirname(outfile))
     outdir = os.path.dirname(outfile)
     minreads <- PARAMS['star_minreads']
@@ -156,14 +155,14 @@ def viral_filter(infiles, outfile):
     os.mkdir(outdir)
 
     statement = '''Rscript %(R_ROOT)s/viral_bam_filter.R -c %(chromosome_count)s 
-                -b %(aligned_bam)s -m %(minreads)s -o %(outdir)s '''
+                -m %(minreads)s -o %(outdir)s '''
     
     P.run(statement)
 
 @transform(viral_filter,
            regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt)
            add_inputs(STAR_map),
-           r"STAR.dir/\1/Viral_BAM_files/\2.bam
+           r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def virus_BAM(infiles, outfile):
     ''' 
     Takes virus names from empty text files and aligned bam 
@@ -171,7 +170,6 @@ def virus_BAM(infiles, outfile):
     '''
 
     virus_name_file, aligned_bam = infiles
-    outdir = os.path.dirname(outfile)
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
 
 
@@ -180,10 +178,50 @@ def virus_BAM(infiles, outfile):
     P.run(statement)
 
 
+@split(samtoools_chromosome_count, 
+           regex("(\S+)/(\S+)_Count_chrosomes.txt"),
+           r"\1/Human_BAM_files/human_file_names/*.txt")
+def human_filter(infiles, outfile):
+    '''
+    Uses R script to filter out anything not human and any chromosomes
+    under threshold number of reads, then create empty txt file for each name 
+    '''
+
+    chromosome_count = infile
+    BAM_folder = os.path.dirname(os.path.dirname(outfile))
+    outdir = os.path.dirname(outfile)
+    minreads <- PARAMS['star_minreads']
+
+    os.mkdir(BAM_folder)
+    os.mkdir(outdir)
+
+    statement = '''Rscript %(R_ROOT)s/human_bam_filter.R -c %(chromosome_count)s 
+                -m %(minreads)s -o %(outdir)s '''
+    
+    P.run(statement)
+
+@transform(human_filter,
+           regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt)
+           add_inputs(STAR_map),
+           r"STAR.dir/\1/Viral_BAM_files/\2.bam")
+def human_BAM(infiles, outfile):
+    ''' 
+    Takes human chromosome names from empty text files and aligned bam 
+    and makes bam file for each chromsome
+    '''
+
+    human_name_file, aligned_bam = infiles
+    human_chrom =  os.path.basename(human_name_file).replace(".txt", "")
+
+
+    statement = ''' samtools view -b %(aligned_bam)s '%(human_chrom)s' > %(outfile)s '''
+
+    P.run(statement)
 
 
 
-@follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM)
+@follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
+human_filter, human_BAM)
 def full():
     '''
     Runs everything
