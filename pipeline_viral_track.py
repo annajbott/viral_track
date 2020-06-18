@@ -46,6 +46,8 @@ PARAMS = P.get_parameters(
      "../pipeline.yml",
      "pipeline.yml"])
 
+R_ROOT = os.path.join(os.path.dirname(__file__), "R")
+
 # Find fastq files (unsure of format)
 try:
     PARAMS['data']
@@ -105,7 +107,7 @@ def STAR_map(infile, outfile):
 
 @transform(STAR_map,
            regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"STAR.dir/\1/\1_<whatever_file_suffix_is>.bam")
+           r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam.bai")
 def samtools_index(infile, outfile):
     '''
     Index bam file using samtools
@@ -122,7 +124,7 @@ def samtools_index(infile, outfile):
 
 @transform(STAR_map,
            regex("(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"\1/\1_Count_chromsomes.txt")
+           r"\1/\2_Count_chromsomes.txt")
 def samtools_chromosome_count(infile, outfile):
     ''' 
     Compute the number of mapped reads for each chromosome/virus
@@ -132,6 +134,26 @@ def samtools_chromosome_count(infile, outfile):
 
     job.memory = "20G"
 
+    P.run(statement)
+
+
+@transform(STAR_map, 
+           regex("(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
+           add_inputs(samtoools_chromosome_count),
+           r"\1/Viral_BAM_files/<name>")
+def viral_bam(infiles, outfile):
+    '''
+    Uses R script to filter out human chromosomes and viruses
+    under threshold number of reads, then create SAM file for each virus
+    '''
+
+    aligned_bam, chromosome_count = infiles
+    outdir = os.path.dirname(outfile)
+    os.mkdir(outdir)
+
+    statement = '''Rscript %(R_ROOT)s/viral_bam_filter.R -c %(chromosome_count)s -b %(aligned_bam)s -o %(outdir)s '''
+    
+    # Samtools view still handled in R, ideally would be a separate module. 
     P.run(statement)
 
 
