@@ -4,7 +4,8 @@ parser <- OptionParser()
 option_list <- list(
     make_option(c("-c", "--chromsomeCount"), action="store", type="character", help="Path to <sample>_Count_chromosomes.txt"),
     make_option(c("-b", "--alignedBAM"), action="store", type="character", help="Path to <sample>_Aligned.sortedByCoord.out.bam"),
-    make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral BAM files")
+    make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral BAM files"),
+    make_option(c("-m", "--minreads", action="store", type="integer", default = 50, help="Minimum number of mapped viral reads, default = [default]")
 )
     
 
@@ -14,6 +15,7 @@ opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trai
 chromosome_count_path <- opt$chromsomeCount
 bam_path <- opt$alignedBAM
 outdir <- opt$outdir
+minreads <- opt$minreads
 
 
 temp_chromosome_count = read.table(chromosome_count_path,header = F,row.names = 1)colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
@@ -44,12 +46,18 @@ Chromosome_to_remove = c("1","10","11","12","13","14","15","16","17","18","19","
 
 temp_chromosome_count = temp_chromosome_count[!rownames(temp_chromosome_count)%in%Chromosome_to_remove,] ##All viral "chromosome start with a "NC"
 temp_chromosome_count = temp_chromosome_count[temp_chromosome_count$Mapped_reads>Minimal_read_mapped,]
+write.csv(temp_chromosome_count, paste(outdir, "/Virus_chromosomes_count_filtered.csv", row.names = TRUE)
 
+# Create empty file with virus name as file name 
+for(virus in rownames(temp_chromosome_count){
+    file_name = paste(outdir, "/", virus, ".txt", sep = "")
+    file.create(file_name)
+}
 
 # We then create one SAM file for each virus 
-if(length(rownames(temp_chromosome_count))>1){
-  foreach(i=rownames(temp_chromosome_count)) %dopar% {
-    temp_export_bam_command = paste("samtools view -b ", bam_path," \'",i,"\'"," > \'",temp_output_dir,"/Viral_BAM_files/",i,".bam\'",sep = "")
-    system(temp_export_bam_command)
-  }
-}
+#if(length(rownames(temp_chromosome_count))>1){
+#  foreach(i=rownames(temp_chromosome_count)) %dopar% {
+#    temp_export_bam_command = paste("samtools view -b ", bam_path," \'",i,"\'"," > \'", outdir,"/",i,".bam\'",sep = "")
+#    system(temp_export_bam_command)
+#  }
+#}
