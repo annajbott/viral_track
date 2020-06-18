@@ -163,7 +163,7 @@ def viral_filter(infiles, outfile):
            regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt)
            add_inputs(STAR_map),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
-def virus_BAM(infiles, outfile):
+def viral_BAM(infiles, outfile):
     ''' 
     Takes virus names from empty text files and aligned bam 
     and makes bam file for each virus
@@ -218,6 +218,26 @@ def human_BAM(infiles, outfile):
 
     P.run(statement)
 
+
+@collate(viral_bam,
+        regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
+        r"QC.dir/\1/QC_filtered.txt") # Fill in name
+def viral_QC(infile, outfile):
+    ''' 
+    Performs quality control on viral BAM file
+    '''
+
+    viral_bam_directory = os.path.dirname(infile[0])
+    
+    
+    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s'''
+
+
+    P.run(statement)
+    
+
+    
+        
 
 
 @follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,

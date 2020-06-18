@@ -3,7 +3,7 @@ library(optparse)
 parser <- OptionParser()
 option_list <- list(
     make_option(c("-c", "--chromsomeCount"), action="store", type="character", help="Path to <sample>_Count_chromosomes.txt"),
-    make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral BAM files"),
+    make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral file name folder"),
     make_option(c("-m", "--minreads", action="store", type="integer", default = 50, help="Minimum number of mapped viral reads, default = [default]")
 )
     
