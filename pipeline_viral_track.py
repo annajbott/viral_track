@@ -224,6 +224,7 @@ def human_BAM(infiles, outfile):
     P.run(statement)
 
 
+# Need to finish R script ...
 @collate(viral_bam,
         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
         r"QC.dir/\1/QC_filtered.txt") # Fill in name
@@ -240,19 +241,91 @@ def viral_QC(infile, outfile):
 
     P.run(statement)
     
-
+# Not finished ....
 @collate(viral_bam,
          regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
          add_inputs(viral_QC),
-         r"merged_viral_mapping.bam")
+         r"STAR.dir/(\S+)/merged_viral_mapping.bam")
 def merge_viruses(infiles, outfile):
     '''
     Merging BAM for all QC filtered viruses
     '''
 
 
+@collate(human_BAM,
+         regex("STAR.dir/(\S+)/Human_BAM_files/\S+.bam"),
+         r"STAR.dir/(\S+)/merged_human_mapping.bam")
+def samtools_merge(infiles, outfile):
+    '''
+    Merge human chromsome BAM files using samtools
+    '''
+
+    path_to_BAM = os.path.dirname(infile[0])
+    infile_list = ' '.join(infiles)
     
-        
+
+    statement = ''' samtools merge %(outfile)s -f %(infile_list)s '''
+
+    P.run(statement)
+
+
+# Need task to create pseudo GTF...
+@follows(mkdir("featureCounts.dir"))
+@transform(samtools_merge,
+           regex("STAR.dir/(\S+)/merged_human_mapping.bam"),
+           add_inputs(GTF_task)
+           r"featureCounts.dir/\1/merged_human_mapping.featureCounts.bam")
+def feature_counts(infile, outfile):
+    '''
+    Perform feature counts on the merged BAM file
+    '''
+
+    merged_bam, gtf = infiles
+    sample_name = merged_bam.split("/")[1]
+    counts_file = "featureCounts.dir/" + sample_name + "/" + sample_name + "_counts.txt"
+    # Move bam file to featurecounts folder and rename 
+    bam_out_og = merged_bam + ".featureCounts.bam"
+    
+    statement = ''' featureCounts -t transcript -M --primary -R BAM -g gene_id 
+                    -a  %(gtf)s -o %(counts_file)s %(merged_bam)s && 
+                    mv %(bam_out_og)s %(outfile)s '''
+
+
+    P.run(statement)
+
+
+# What directory to put in ??? Have just put in feature counts
+@transform(feature_counts,
+           regex("(\S+)/(\S+)/(\S+).featureCounts.bam"),
+           r"\1/\2/\2_assigned_sorted.bam")
+def samtools_sort_index(infile, outfile):
+    '''
+    Sort and index BAM file produced by feature counts
+    ''' 
+
+    statement = ''' samtools sort %(infile)s -o %(outfile)s &&
+                    samtools index %(outfile)s '''
+
+    P.run(statement)
+
+
+@follows(mkdir("UMI_tools.dir"))
+@transform(samtools_sort_index,
+           regex("featureCounts.dir/(\S+)/(\S+)_assigned_sorted.bam"),
+           r"UMI_tools.dir/\1/Expression_table.tsv")
+def UMI_tools(infile, outfile):
+    '''
+    Count using UMI tools
+    '''    
+
+    
+    statement = ''' umi_tools count --per-gene --gene-tag=XT --assigned-status-tag=XT --per-cell 
+                    -I %(infile)s -S %(outfile)s --wide-format-cell-counts '''
+
+    P.run(statement)
+
+
+## Now need one final R script to create matrix of results
 
 
 @follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
