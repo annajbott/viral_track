@@ -6,20 +6,24 @@ Overview
 =========
 
 This workflow was designed as a CGAT pipeline representation of R viral_track code by Bost et al.
-Viral track can be found:
+Viral track can be found at:
 - https://www.sciencedirect.com/science/article/pii/S0092867420305687
 - https://github.com/PierreBSC/Viral-Track
 
-Adapted by Lauren Overend (Lauren.overend@oriel.ox.ac.uk)
+Additonal functionality has been added. 
 
+Adapted by Lauren Overend and Anna James-Bott.
+
+Any ViralTrack specific questions direct to Lauren.overend@oriel.ox.ac.uk
 Any CGAT pipeline specific questions direct to anna.james-bott@st-hildas.ox.ac.uk
+
 
 
 Requires:
 
 * fastq files 
 * Reference genome 
-* ... 
+
 
 Pipeline output
 ================
@@ -39,6 +43,10 @@ import os
 import cgatcore.pipeline as P
 import cgatcore.experiment as E
 
+
+###############################
+# Load in parameters and data
+###############################
     
 # load options from the config file
 PARAMS = P.get_parameters(
@@ -67,6 +75,10 @@ SEQUENCEFILES = tuple([os.path.join(DATADIR, suffix_name)
                             for suffix_name in SEQUENCESUFFIXES])
 
 
+#############################
+# Make GTF for viral track
+#############################
+
 @follows(mkdir("geneset.dir"))
 @originate("geneset.dir/ViralTrack_GTF.gtf")
 def make_gtf(outfile):
@@ -87,6 +99,9 @@ def make_gtf(outfile):
 
     P.run(statement)
 
+#############################
+# STAR mapping and samtools
+#############################
 
 @follows(mkdir("STAR.dir"))
 @transform(SEQUENCEFILES,
@@ -162,6 +177,9 @@ def samtools_chromosome_count(infile, outfile):
 
     P.run(statement)
 
+################################
+# Filter out human and viruses
+################################
 
 @split(samtoools_chromosome_count, 
            regex("(\S+)/(\S+)_Count_chrosomes.txt"),
@@ -244,6 +262,9 @@ def human_BAM(infiles, outfile):
 
     P.run(statement)
 
+#######################
+# Quality control
+#######################
 
 # Need to finish R script ...
 @collate(viral_bam,
@@ -272,6 +293,9 @@ def merge_viruses(infiles, outfile):
     Merging BAM for all QC filtered viruses
     '''
 
+#############################
+# De-multiplexing R file
+#############################
 
 @collate(human_BAM,
          regex("STAR.dir/(\S+)/Human_BAM_files/\S+.bam"),
@@ -290,7 +314,6 @@ def samtools_merge(infiles, outfile):
     P.run(statement)
 
 
-# Need task to create pseudo GTF...
 @follows(mkdir("featureCounts.dir"))
 @transform(samtools_merge,
            regex("STAR.dir/(\S+)/merged_human_mapping.bam"),
@@ -333,7 +356,7 @@ def samtools_sort_index(infile, outfile):
 @follows(mkdir("UMI_tools.dir"))
 @transform(samtools_sort_index,
            regex("featureCounts.dir/(\S+)/(\S+)_assigned_sorted.bam"),
-           r"UMI_tools.dir/\1/Expression_table.tsv")
+           r"UMI_tools.dir/\1_Expression_table.tsv")
 def UMI_tools(infile, outfile):
     '''
     Count using UMI tools
@@ -347,10 +370,29 @@ def UMI_tools(infile, outfile):
 
 
 ## Now need one final R script to create matrix of results
+@follows(mkdir("viral_filtered_features.dir"))
+@transform(UMI_tools,
+           regex("\S+/(\S+)_Expression_table.tsv"),
+           r"viral_filtered_features.dir/\1/barcodes.tsv")
+def matrix_report(infile, outfile):
+    ''' 
+    Sparse matrix of features and folder containing 
+    summarised results, e.g. QC filters and counts etc.
+    '''
 
+    sample_name = outfile.split('/')[1]
+    outdir = os.path.dirname(outfile)
+
+    statement = ''' Rscript %(R_ROOT)s/mat.R (PROBS A DIF NAME) 
+                    -s %(sample_name)s -o %(outdir)s -i %(infile)s '''
+
+    P.run(statement)
+
+    
 
 @follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
-human_filter, human_BAM, viral_QC)
+human_filter, human_BAM, viral_QC, merge_viruses, samtools_merge, feature_counts, 
+samtools_sort_index, UMI_tools, matrix_report)
 def full():
     '''
     Runs everything
