@@ -105,6 +105,11 @@ def STAR_map(infile, outfile):
 
     P.run(statement)
 
+
+### Merge samples here ###
+## samtools merge, samtools sort
+
+
 @transform(STAR_map,
            regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
            r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam.bai")
@@ -173,7 +178,7 @@ def viral_BAM(infiles, outfile):
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
 
 
-    statement = ''' samtools view -b %(aligned_bam)s '%(virus)s' > %(outfile)s '''
+    statement = """ samtools view -b %(aligned_bam)s '%(virus)s' > %(outfile)s """
 
     P.run(statement)
 
@@ -214,7 +219,7 @@ def human_BAM(infiles, outfile):
     human_chrom =  os.path.basename(human_name_file).replace(".txt", "")
 
 
-    statement = ''' samtools view -b %(aligned_bam)s '%(human_chrom)s' > %(outfile)s '''
+    statement = """ samtools view -b %(aligned_bam)s '%(human_chrom)s' > %(outfile)s """
 
     P.run(statement)
 
@@ -236,12 +241,22 @@ def viral_QC(infile, outfile):
     P.run(statement)
     
 
+@collate(viral_bam,
+         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
+         add_inputs(viral_QC),
+         r"merged_viral_mapping.bam")
+def merge_viruses(infiles, outfile):
+    '''
+    Merging BAM for all QC filtered viruses
+    '''
+
+
     
         
 
 
 @follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
-human_filter, human_BAM)
+human_filter, human_BAM, viral_QC)
 def full():
     '''
     Runs everything
