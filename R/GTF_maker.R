@@ -27,7 +27,7 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
 ## Reading in chrLength file from the STAR genome Index build: 
-backbone <- paste0(opt$indexgenome, 'chrNameLength.txt')
+backbone <- paste0(opt$indexgenome, '/chrNameLength.txt')
 ChrLength <- read.delim(backbone, header=FALSE)
 ## Making GTF directory in Outs 
 GTF_dir = paste(opt$outputdir, '/GTF', sep = "")
