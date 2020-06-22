@@ -4,16 +4,17 @@
 #
 #################
 
-genome_dir: /well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/
+genome_dir: /well/combat/projects/preprocess/VIRAL_TRACK/References/VIRAL_TRACK_REFERENCE_BUILD_273a
 
 # 0 if needs to be made, otherwise list path e.g. 
-viraltrack_gtf: 0 
+viraltrack_gtf: 0
+#/well/combat/projects/preprocess/VIRAL_TRACK/References/ViralTrack_GTF.gtf 
 
 # data = 0 implies fastq files in current directory. Data = 1: data stored in data.dir folder
 data = 0
 
 # Location of viral annotation text file
-viral_annotation: /well/immune-rep/users/kvi236/VIRUS/VIRAL_TRACK/Virusite_annotation_file.txt
+viral_annotation: /well/combat/projects/preprocess/VIRAL_TRACK/References/Virusite_annotation_file.txt
 
 ################
 # STAR Mapping
