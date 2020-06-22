@@ -67,6 +67,27 @@ SEQUENCEFILES = tuple([os.path.join(DATADIR, suffix_name)
                             for suffix_name in SEQUENCESUFFIXES])
 
 
+@follows(mkdir("geneset.dir"))
+@originate("geneset.dir/ViralTrack_GTF.gtf")
+def make_gtf(outfile):
+    '''
+    Make custom GTF for viraltrack from chromosome index 
+    or copy existing gtf into geneset directory
+    '''
+
+    index_genome = PARAMS['genome_dir']
+    viraltrack_loc = PARAMS['viraltrack_gtf']
+
+    # If there is 
+    if viraltrack_loc:
+        statement = ''' cp %(viraltrack_loc)s %(outfile)s '''
+
+    else:
+        statement = ''' Rscript %(R_ROOT)s/GTF_maker.R -i %(index_genome)s -o %(outfile)s '''
+
+    P.run(statement)
+
+
 @follows(mkdir("STAR.dir"))
 @transform(SEQUENCEFILES,
            regex("(\S+).fa"),
@@ -273,7 +294,7 @@ def samtools_merge(infiles, outfile):
 @follows(mkdir("featureCounts.dir"))
 @transform(samtools_merge,
            regex("STAR.dir/(\S+)/merged_human_mapping.bam"),
-           add_inputs(GTF_task)
+           add_inputs(make_gtf),
            r"featureCounts.dir/\1/merged_human_mapping.featureCounts.bam")
 def feature_counts(infile, outfile):
     '''

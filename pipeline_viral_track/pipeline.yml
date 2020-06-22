@@ -4,8 +4,10 @@
 #
 #################
 
-
 genome_dir: /well/immune-rep/users/kvi236/VIRAL_TRACK_REFERENCE_COVID/
+
+# 0 if needs to be made, otherwise list path e.g. 
+viraltrack_gtf: 0 
 
 # data = 0 implies fastq files in current directory. Data = 1: data stored in data.dir folder
 data = 0
