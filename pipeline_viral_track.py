@@ -384,7 +384,7 @@ def matrix_report(infile, outfile):
     outdir = os.path.dirname(outfile)
 
     statement = ''' Rscript %(R_ROOT)s/mat.R (PROBS A DIF NAME) 
-                    -s %(sample_name)s -o %(outdir)s -i %(infile)s '''
+                    -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
 
     P.run(statement)
 

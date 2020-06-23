@@ -23,19 +23,21 @@ library(optparse)
 library(Matrix)
 parser <- OptionParser()
 option_list <- list( 
-  make_option(c("-e", "--expressiontsv"), action="store", default='/well/immune-rep/users/kvi236/VIRUS/REAL/sub100k.fa/Expression_table.tsv', type="character", help="Path to Expression_table.tsv from umicounts"),
-  make_option(c("-p", "--pathtosampledir"), action="store", default='/gpfs2/well/immune-rep/users/kvi236/VIRUS/REAL/sub100k.fa', type="character", help="Path to sample directory")
+  make_option(c("-e", "--expressiontsv"), action="store", type="character", help="Path to Expression_table.tsv from umicounts"),
+  make_option(c("-s", "--samplename"), action="store", type="character", help="Sample name"),
+  make_option(c("-o", "--outdir"), action="store", type="character", help="Directory of outfile")
 )
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE))
 
 ## Create the Final Output directy: viral_filtered_features
-MTX_dir = paste(opt$pathtosampledir,"/viral_filtered_features/", sep = "")
+MTX_dir = opt$outdir
 dir.create(MTX_dir)
 
 #Read non-sparse  Expression_table.tsv features from UMI-tools:
-file = paste0(opt$pathtosampledir, "/Expression_table.tsv")
-expression_table <- read.table(file = file, sep = '\t', header = TRUE, row.names = 1)
+file_tsv = opt$expressiontsv
+expression_table <- read.table(file = file_tsv, sep = '\t', header = TRUE, row.names = 1)
+
 #Convert to data-frame to allow for Calculation of Summary Statistics
 expression_table <- as.data.frame(t(expression_table))
 viral_cols <- grep("refseq", colnames(expression_table), value=TRUE)
@@ -84,4 +86,4 @@ cellbarcode <- rownames(expression_table)
 genome <- colnames(expression_table)
 write.table(cellbarcode, file=paste0(MTX_dir, 'barcodes.tsv'), quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
 write.table(genome, file=paste0(MTX_dir, 'genomes.tsv'), quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
-## Output files generated:
+## Output files generated
