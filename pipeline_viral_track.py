@@ -243,7 +243,7 @@ def samtools_index(infile, outfile):
 
 @transform(STAR_map,
            regex("(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"\1/\2_Count_chromsomes.txt")
+           r"\1/\2_Count_chromosomes.txt")
 def samtools_chromosome_count(infile, outfile):
     ''' 
     Compute the number of mapped reads for each chromosome/virus
@@ -259,10 +259,10 @@ def samtools_chromosome_count(infile, outfile):
 # Filter out human and viruses
 ################################
 
-@split(samtoools_chromosome_count, 
-           regex("(\S+)/(\S+)_Count_chrosomes.txt"),
-           r"\1/Viral_BAM_files/virus_file_names/*.txt")
-def viral_filter(infiles, outfile):
+@subdivide(samtools_chromosome_count, 
+       regex("(\S+)/(\S+)_Count_chromosomes.txt"),
+       r"\1/Viral_BAM_files/virus_file_names/*.txt")
+def viral_filter(infile, outfiles):
     '''
     Uses R script to filter out human chromosomes and viruses
     under threshold number of reads, then create empty txt file for each virus 
@@ -300,9 +300,9 @@ def viral_BAM(infiles, outfile):
     P.run(statement)
 
 
-@split(samtoools_chromosome_count, 
-           regex("(\S+)/(\S+)_Count_chrosomes.txt"),
-           r"\1/Human_BAM_files/human_file_names/*.txt")
+@subdivide(samtools_chromosome_count, 
+       regex("(\S+)/(\S+)_Count_chromosomes.txt"),
+       r"\1/Human_BAM_files/human_file_names/*.txt")
 def human_filter(infiles, outfile):
     '''
     Uses R script to filter out anything not human and any chromosomes
@@ -345,7 +345,7 @@ def human_BAM(infiles, outfile):
 #######################
 
 # Need to finish R script ...
-@collate(viral_bam,
+@collate(viral_BAM,
         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
         r"QC.dir/\1/QC_filtered.txt") # Fill in name
 def viral_QC(infile, outfile):
@@ -362,7 +362,7 @@ def viral_QC(infile, outfile):
     P.run(statement)
     
 # Not finished ....
-@collate(viral_bam,
+@collate(viral_BAM,
          regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
          add_inputs(viral_QC),
          r"STAR.dir/(\S+)/merged_viral_mapping.bam")
@@ -468,7 +468,7 @@ def matrix_report(infile, outfile):
 
     
 
-@follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
+@follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, viral_BAM,
 human_filter, human_BAM, viral_QC, merge_viruses, samtools_merge, feature_counts, 
 samtools_sort_index, UMI_tools, matrix_report)
 def full():
