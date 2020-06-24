@@ -150,7 +150,7 @@ def wget_viral_chromosomes(outfile):
 
 @active_if(PARAMS['index_star'])
 @follows(wget_human_chromosomes,wget_viral_chromosomes)
-@follows(mkdir("index.dir/star_index.dir")
+@follows(mkdir("index.dir/star_index.dir"))
 @originate("index.dir/star.dir/<anything to track???>")
 def STAR_index(outfile):
     '''
@@ -282,7 +282,7 @@ def viral_filter(infiles, outfile):
     P.run(statement)
 
 @transform(viral_filter,
-           regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt)
+           regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt"),
            add_inputs(STAR_map),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def viral_BAM(infiles, outfile):
@@ -323,7 +323,7 @@ def human_filter(infiles, outfile):
     P.run(statement)
 
 @transform(human_filter,
-           regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt)
+           regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
            add_inputs(STAR_map),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
