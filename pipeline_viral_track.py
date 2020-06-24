@@ -54,7 +54,6 @@ PARAMS = P.get_parameters(
      "../pipeline.yml",
      "pipeline.yml"])
 
-R_ROOT = os.path.join(os.path.dirname(__file__), "R")
 
 # Find fastq files (unsure of format)
 try:
@@ -86,8 +85,9 @@ def make_gtf(outfile):
     Make custom GTF for viraltrack from chromosome index 
     or copy existing gtf into geneset directory
     '''
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
 
-    index_genome = PARAMS['genome_dir']
+    index_genome = PARAMS['index_genome_dir']
     viraltrack_loc = PARAMS['viraltrack_gtf']
 
     # If there is 
@@ -105,17 +105,15 @@ def make_gtf(outfile):
 #############################
 
 # Build star index genome if index_star set to 1 in params.yml
-
-@active_if(PARAMS['index_star'])
+@active_if(PARAMS['index_star_wget'])
 @follows(mkdir("index.dir"))
 @follows(mkdir("index.dir/HUMAN_GENOME"))
-@originate("index.dir/HUMAN_GENOME/Homo_sapiens.GRCh38.dna.chromosome.Y.fa") # Just file to check all steps have run
+@originate(["index.dir/HUMAN_GENOME/Homo_sapiens.GRCh38.dna.chromosome.Y.fa"])
 def wget_human_chromosomes(outfile):
     ''' 
     Download human chromosomes 1-23, X and Y
     Wget ensembl public fastas then gunzip the files.
     '''
-
 
     statement = ''' wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
                 -A "Homo_sapiens.GRCh38.dna.chromosome.[0-9].fa.gz" 
@@ -129,9 +127,10 @@ def wget_human_chromosomes(outfile):
                 gunzip index.dir/HUMAN_GENOME/*.fa.gz
                 '''
     
-    P.run(statement)
+    P.run(statement, to_cluster=False)
 
-@active_if(PARAMS['index_star'])
+
+@active_if(PARAMS['index_star_wget'])
 @follows(mkdir("index.dir/VIRUS_GENOME"))
 @originate("index.dir/VIRUS_GENOME/genes.fasta")
 def wget_viral_chromosomes(outfile):
@@ -149,23 +148,26 @@ def wget_viral_chromosomes(outfile):
     P.run(statement)
 
 @active_if(PARAMS['index_star'])
-@follows(wget_human_chromosomes,wget_viral_chromosomes)
-@follows(mkdir("index.dir/star_index.dir")
-@originate("index.dir/star.dir/<anything to track???>")
+@follows(mkdir("index.dir/star_index.dir"))
+@active_if(PARAMS['index_star'])
+@originate("index.dir/star_index.dir/index")
 def STAR_index(outfile):
+
     '''
     Builds star index for human genome and viruses
     '''
 
     nthreads = PARAMS['star_nThreads']
     # In yml file contain param for any extra fastas (file location), e.g. covid19, "" if none
-    extra_fasta = PARAMS['index_extrafasta']
+    extra_fasta = PARAMS['index_extra_fasta']
 
-    statement = ''' STAR --runThreadN %(nthreads)s --runMode genomeGenerate 
+    statement = ''' STAR --runThreadN %(nthreads)s --limitGenomeGenerateRAM 268822031285 --runMode genomeGenerate 
                 --genomeDir index.dir/star_index.dir --genomeFastaFiles 
                 index.dir/VIRUS_GENOME/genes.fasta index.dir/HUMAN_GENOME/*.fa 
                 %(extra_fasta)s
                 '''
+
+    job_memory="100G"
 
     P.run(statement)
 
@@ -173,6 +175,7 @@ def STAR_index(outfile):
 # STAR mapping and samtools
 #############################
 
+@follows(STAR_index)
 @follows(mkdir("STAR.dir"))
 @transform(SEQUENCEFILES,
            regex("(\S+).fa"),
@@ -257,7 +260,7 @@ def samtools_chromosome_count(infile, outfile):
 # Filter out human and viruses
 ################################
 
-@split(samtoools_chromosome_count, 
+@transform(samtools_chromosome_count, 
            regex("(\S+)/(\S+)_Count_chrosomes.txt"),
            r"\1/Viral_BAM_files/virus_file_names/*.txt")
 def viral_filter(infiles, outfile):
@@ -280,7 +283,7 @@ def viral_filter(infiles, outfile):
     P.run(statement)
 
 @transform(viral_filter,
-           regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt)
+           regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt"),
            add_inputs(STAR_map),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def viral_BAM(infiles, outfile):
@@ -298,7 +301,7 @@ def viral_BAM(infiles, outfile):
     P.run(statement)
 
 
-@split(samtoools_chromosome_count, 
+@transform(samtools_chromosome_count, 
            regex("(\S+)/(\S+)_Count_chrosomes.txt"),
            r"\1/Human_BAM_files/human_file_names/*.txt")
 def human_filter(infiles, outfile):
@@ -321,7 +324,7 @@ def human_filter(infiles, outfile):
     P.run(statement)
 
 @transform(human_filter,
-           regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt)
+           regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
            add_inputs(STAR_map),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
@@ -343,7 +346,7 @@ def human_BAM(infiles, outfile):
 #######################
 
 # Need to finish R script ...
-@collate(viral_bam,
+@collate(viral_BAM,
         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
         r"QC.dir/\1/QC_filtered.txt") # Fill in name
 def viral_QC(infile, outfile):
@@ -360,7 +363,7 @@ def viral_QC(infile, outfile):
     P.run(statement)
     
 # Not finished ....
-@collate(viral_bam,
+@collate(viral_BAM,
          regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
          add_inputs(viral_QC),
          r"STAR.dir/(\S+)/merged_viral_mapping.bam")
@@ -466,7 +469,7 @@ def matrix_report(infile, outfile):
 
     
 
-@follows(STAR_map, samtools_index, samtools_chromosome_count, viral_filter, virus_BAM,
+@follows(STAR_map, samtools_chromosome_count, samtools_index, viral_filter, viral_BAM,
 human_filter, human_BAM, viral_QC, merge_viruses, samtools_merge, feature_counts, 
 samtools_sort_index, UMI_tools, matrix_report)
 def full():
