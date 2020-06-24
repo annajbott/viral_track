@@ -1,12 +1,12 @@
-#################
+################
 #
 # Configuration file for pipiline_viral_track
 #
-#################
+################
 
 # Location of fastq data files
 # data = 0 implies fastq files in current directory. Data = 1: data stored in data.dir folder
-data = 0
+data: 0
 
 ################
 # Index building
@@ -28,9 +28,9 @@ index:
 
 # Viraltrack_gtf
 # 0 if it needs to be made, otherwise list path e.g. 
-#/well/combat/projects/preprocess/VIRAL_TRACK/References/ViralTrack_GTF.gtf 
+#/well/combat/projects/preprocess/VIRAL_TRACK/References/ViralTrack_GTF.gtf
 viraltrack_gtf: 0
-  
+
 
 # Location of viral annotation text file
 viral_annotation: /well/combat/projects/preprocess/VIRAL_TRACK/References/Virusite_annotation_file.txt
