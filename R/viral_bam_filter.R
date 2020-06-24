@@ -16,7 +16,8 @@ outdir <- opt$outdir
 minreads <- opt$minreads
 
 
-temp_chromosome_count = read.table(chromosome_count_path,header = F,row.names = 1)colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
+temp_chromosome_count = read.table(chromosome_count_path,header = F,row.names = 1)
+colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
 
 Chromosome_to_remove = c("1","10","11","12","13","14","15","16","17","18","19","2","20","21","22","3","4","5","6","7","8","9","MT","X","Y",
                           "KI270728.1","KI270727.1","KI270442.1","KI270729.1","GL000225.1","KI270743.1","GL000008.2","GL000009.2",

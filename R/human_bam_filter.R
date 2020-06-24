@@ -15,7 +15,8 @@ chromosome_count_path <- opt$chromsomeCount
 outdir <- opt$outdir
 minreads <- opt$minreads
 
-temp_chromosome_count_2 = read.table(chromosome_count_path,header = F,row.names = 1)colnames(temp_chromosome_count_2) = c("Chromosome_length","Mapped_reads","Unknown")
+temp_chromosome_count_2 = read.table(chromosome_count_path,header = F,row.names = 1)
+colnames(temp_chromosome_count_2) = c("Chromosome_length","Mapped_reads","Unknown")
 
 Human_chr = c("X","Y","MT",as.character(1:23))
 temp_chromosome_count_2 = temp_chromosome_count_2[rownames(temp_chromosome_count_2)%in%Human_chr,]
