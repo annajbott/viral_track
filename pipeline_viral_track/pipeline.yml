@@ -4,14 +4,33 @@
 #
 #################
 
-genome_dir: /well/combat/projects/preprocess/VIRAL_TRACK/References/VIRAL_TRACK_REFERENCE_BUILD_273a
-
-# 0 if needs to be made, otherwise list path e.g. 
-viraltrack_gtf: 0
-#/well/combat/projects/preprocess/VIRAL_TRACK/References/ViralTrack_GTF.gtf 
-
+# Location of fastq data files
 # data = 0 implies fastq files in current directory. Data = 1: data stored in data.dir folder
 data = 0
+
+################
+# Index building
+################
+
+# Parameters for index
+index:
+  
+  # Logical, use star to build genome index or not, 0 for no, 1 to use star to build index
+  star: 0
+
+  # If not using star, location of pre-built index 
+  genome_dir: /well/combat/projects/preprocess/VIRAL_TRACK/References/VIRAL_TRACK_REFERENCE_BUILD_273a
+
+  # Location of any extra fastas to add, e.g. covid19, if none leave "", if multiple list with space in between
+  extra_fasta: /well/immune-rep/users/kvi236/VIRUS_REFERENCE/covid-19.fasta
+
+################
+
+# Viraltrack_gtf
+# 0 if it needs to be made, otherwise list path e.g. 
+#/well/combat/projects/preprocess/VIRAL_TRACK/References/ViralTrack_GTF.gtf 
+viraltrack_gtf: 0
+  
 
 # Location of viral annotation text file
 viral_annotation: /well/combat/projects/preprocess/VIRAL_TRACK/References/Virusite_annotation_file.txt

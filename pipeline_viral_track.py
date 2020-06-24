@@ -99,6 +99,76 @@ def make_gtf(outfile):
 
     P.run(statement)
 
+
+#############################
+# Build indexes
+#############################
+
+# Build star index genome if index_star set to 1 in params.yml
+
+@active_if(PARAMS['index_star'])
+@follows(mkdir("index.dir"))
+@follows(mkdir("index.dir/HUMAN_GENOME"))
+@originate("index.dir/HUMAN_GENOME/Homo_sapiens.GRCh38.dna.chromosome.Y.fa") # Just file to check all steps have run
+def wget_human_chromosomes(outfile):
+    ''' 
+    Download human chromosomes 1-23, X and Y
+    Wget ensembl public fastas then gunzip the files.
+    '''
+
+
+    statement = ''' wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
+                -A "Homo_sapiens.GRCh38.dna.chromosome.[0-9].fa.gz" 
+                ftp://ftp.ensembl.org/pub/release-100/fasta/homo_sapiens/dna/ && 
+                wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
+                -A "Homo_sapiens.GRCh38.dna.chromosome.[12][0-9].fa.gz" 
+                ftp://ftp.ensembl.org/pub/release-100/fasta/homo_sapiens/dna/ &&
+                wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
+                -A "Homo_sapiens.GRCh38.dna.chromosome.[XY].fa.gz" 
+                ftp://ftp.ensembl.org/pub/release-100/fasta/homo_sapiens/dna/ &&
+                gunzip index.dir/HUMAN_GENOME/*.fa.gz
+                '''
+    
+    P.run(statement)
+
+@active_if(PARAMS['index_star'])
+@follows(mkdir("index.dir/VIRUS_GENOME"))
+@originate("index.dir/VIRUS_GENOME/genes.fasta")
+def wget_viral_chromosomes(outfile):
+    '''
+    Download viral reference from VirusSite and unzip
+    '''
+
+
+
+    statement = ''' wget --directory-prefix=index.dir/VIRUS_GENOME/ 
+                http://www.virusite.org/archive/2020.2/genes.fasta.zip && 
+                unzip -d index.dir/VIRUS_GENOME VIRUS_GENOME/genes.fasta.zip
+                '''
+
+    P.run(statement)
+
+@active_if(PARAMS['index_star'])
+@follows(wget_human_chromosomes,wget_viral_chromosomes)
+@follows(mkdir("index.dir/star_index.dir")
+@originate("index.dir/star.dir/<anything to track???>")
+def STAR_index(outfile):
+    '''
+    Builds star index for human genome and viruses
+    '''
+
+    nthreads = PARAMS['star_nThreads']
+    # In yml file contain param for any extra fastas (file location), e.g. covid19, "" if none
+    extra_fasta = PARAMS['index_extrafasta']
+
+    statement = ''' STAR --runThreadN %(nthreads)s --runMode genomeGenerate 
+                --genomeDir index.dir/star_index.dir --genomeFastaFiles 
+                index.dir/VIRUS_GENOME/genes.fasta index.dir/HUMAN_GENOME/*.fa 
+                %(extra_fasta)s
+                '''
+
+    P.run(statement)
+
 #############################
 # STAR mapping and samtools
 #############################
@@ -112,6 +182,12 @@ def STAR_map(infile, outfile):
     Run STAR mapping with parameters defined in yml
     '''
     
+    if PARAMS['index_star']:
+        index_genome = "index.dir/star.dir"
+    else: 
+        index_genome = PARAMS['genome_dir']
+            
+
     nthreads = PARAMS['star_nThreads']
     nBAMsortingthreads = PARAMS['star_nThreadsort']
     nBins = PARAMS['star_bins']
