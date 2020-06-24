@@ -21,7 +21,7 @@ Any CGAT pipeline specific questions direct to anna.james-bott@st-hildas.ox.ac.u
 
 Requires:
 
-* fastq files 
+* Fastq files 
 * Reference genome 
 
 
@@ -159,7 +159,7 @@ def STAR_index(outfile):
 
     nthreads = PARAMS['star_nThreads']
     # In yml file contain param for any extra fastas (file location), e.g. covid19, "" if none
-    extra_fasta = PARAMS['index_extrafasta']
+    extra_fasta = PARAMS['index_extra_fasta']
 
     statement = ''' STAR --runThreadN %(nthreads)s --runMode genomeGenerate 
                 --genomeDir index.dir/star_index.dir --genomeFastaFiles 
@@ -168,6 +168,8 @@ def STAR_index(outfile):
                 '''
 
     P.run(statement)
+
+
 
 #############################
 # STAR mapping and samtools
@@ -219,7 +221,7 @@ def STAR_map(infile, outfile):
 
 
 ### Merge samples here ###
-## samtools merge, samtools sort
+## samtools merge, samtools sort, samtools index
 
 
 @transform(STAR_map,
