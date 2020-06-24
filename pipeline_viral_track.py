@@ -126,7 +126,7 @@ def wget_human_chromosomes(outfile):
                 wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
                 -A "Homo_sapiens.GRCh38.dna.chromosome.[XY].fa.gz" 
                 ftp://ftp.ensembl.org/pub/release-100/fasta/homo_sapiens/dna/ &&
-                gunzip index.dir/HUMAN_GENOME/*.fa.gz
+                gunzip index.dir/HUMAN_GENOME/*.fa.gz && sleep 120
                 '''
     
     P.run(statement)
