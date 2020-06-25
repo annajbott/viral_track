@@ -7,29 +7,29 @@ library(GenomicAlignments)
 parser <- OptionParser()
 option_list <- list(
     make_option(c("-v", "--viraldir"), action="store", type="character", help="Path to vViral_BAM_directory"),
-    make_option(c("-f", "--filteredoutfile"), action="store", type="character", help="Filename of QC_filtered.txt outfile"),
-	make_option(c("-u", "--unfilteredoutfile"), action="store", type="character", help="Filename of QC_unfiltered.txt outfile"),
-    make_option(c("-r", "--rRoot"), action ="store", type="character", help="Path to R directory in pipeline_viral_track repo"),
-	make_option(c("-c", "--countchromosome"), action ="store", type="character", help="Path to countchromosome.txt"),
-	make_option(c("-l", "--logfinalout"), action ="store", type="character", help="Path to file Sample_Log.final.out"),
-	make_option(c("-p", "--pdfname"), action ="store", type="character", help="File name of PDF_QC")
+    make_option(c("-o", "--outfile"), action="store", type="character", help="Path to filtered outfile"),
+    make_option(c("-s", "--sample"), action = "store", type="character", help="Sample name"),
+    make_option(c("-r", "--rRoot"), action ="store", type="character", help="Path to R directory in pipeline_viral_track repo")
 )
     
 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
-viraldir_path <- opt$viraldir   #/gpfs2/well/immune-rep/users/kvi236/VIRUS/REAL/sub100k.fa/Viral_BAM_files
-filteredoutfile <- opt$filteredoutfile
-unfilteredoutfile <- opt$unfilteredoutfile
-rdir <- opt$rRoot 
-path_to_Log_file = opt$logfinalout
+viraldir_path <- opt$viraldir   
+filter_outfile <- opt$outfile
+sample_name <- opt$sample
+rdir <- opt$rRoot
+
+unfilter_outfile <- gsub("QC_unfiltered.txt", "QC_filtered.txt", filter_outfile)
+pdf_name <- gsub("QC_unfiltered.txt", "QC_report.pdf", filter_outfile)
+temp_chromosome_count_path <- paste("STAR.dir/", sample_name, "_Count_chromosomes.txt",sep="")
+path_to_Log_file <- gsub("QC_unfiltered.txt", "Sample_Log.final.out", filter_outfile)
 
 
 # Load in auxillary functions
 source(paste(rdir, "/Module_viral_track.R", sep = "")) 
 
-## Dont think this leads to correct location (shouldnt be in the Viral_BAM_direcotry?
 location_temp_chromsome_count <- paste(viraldir_path, "/virus_file_names/Virus_chromosomes_count_filtered.csv", sep ="")
 temp_chromosome_count <- read.csv(location_temp_chromsome_count, stringsAsFactors=FALSE, header = TRUE, row.names = 1)
 if (length(temp_chromosome_count/2) <= 6){
@@ -119,12 +119,11 @@ detected_virus = rownames(QC_result[QC_result$Sequence_entropy>1.2 & QC_result$L
 ## Returning QC Metrics for viruses that passed Filtering 
 Filtered_QC=QC_result[detected_virus,]
 
-filteredoutfile <- opt$filteredoutfile
-unfilteredoutfile <- opt$unfilteredoutfile
+
 
 ##Exporting the tables of the QC analysis
-write.table(file = unfilteredoutfile, x = QC_result, quote = F,sep = "\t")
-write.table(file = filteredoutfile, x = Filtered_QC, quote = F,sep = "\t")
+write.table(file = unfilter_outfile, x = QC_result, quote = F,sep = "\t")
+write.table(file = filter_outfile, x = Filtered_QC, quote = F,sep = "\t")
 
 
 
@@ -132,9 +131,7 @@ write.table(file = filteredoutfile, x = Filtered_QC, quote = F,sep = "\t")
 # Note removed splice table info as this didnt seem to be used anywhere else?
 ##------------------------------------------------------------------------------------
 
-## Caculating some additional Statistics needed for Plots: 
-## Load Count_chromsome for all data:
-temp_chromosome_count_path = opt$countchromosome
+## Calculating some additional Statistics needed for Plots: 
 
 ## Additional info : % of reads mapped to viral vs host
 Read_count_temp = read.table(temp_chromosome_count_path,header = F,row.names = 1)
@@ -167,9 +164,8 @@ Mapping_selected_virus = Mapping_selected_virus[order(Mapping_selected_virus$Uni
 ## ------------------------------------------------------------------------------------
 ## Plotting the Statisitics 
 
-name <- opt$pdfname
 ## Open PDF file: 
-pdf(name, height = 24, width = 20)
+pdf(pdf_name, height = 24, width = 20)
 par(las=0,mfrow=c(4,3),mar=c(6,6,6,4))
 Color_vector = c("lightskyblue1","orange","grey80")
 

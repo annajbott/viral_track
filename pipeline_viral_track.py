@@ -111,7 +111,7 @@ def make_gtf(outfile):
 @originate(["index.dir/HUMAN_GENOME/Homo_sapiens.GRCh38.dna.chromosome.Y.fa"])
 def wget_human_chromosomes(outfile):
     ''' 
-    Download human chromosomes 1-23, X and Y
+    Download human chromosomes 1-22, X and Y
     Wget ensembl public fastas then gunzip the files.
     '''
 
@@ -369,9 +369,9 @@ def viral_QC(infile, outfile):
     '''
 
     viral_bam_directory = os.path.dirname(infile[0])
+    sample = viral_bam_directory.split("/")[1]
     
-    
-    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s'''
+    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s'''
 
 
     P.run(statement)
