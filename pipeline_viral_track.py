@@ -124,7 +124,7 @@ def wget_human_chromosomes(outfile):
                 wget --directory-prefix=index.dir/HUMAN_GENOME/ -r -np -nH -nd 
                 -A "Homo_sapiens.GRCh38.dna.chromosome.[XY].fa.gz" 
                 ftp://ftp.ensembl.org/pub/release-100/fasta/homo_sapiens/dna/ &&
-                gunzip index.dir/HUMAN_GENOME/*.fa.gz
+                gunzip index.dir/HUMAN_GENOME/*.fa.gz && sleep 120
                 '''
     
     P.run(statement, to_cluster=False)
@@ -142,14 +142,13 @@ def wget_viral_chromosomes(outfile):
 
     statement = ''' wget --directory-prefix=index.dir/VIRUS_GENOME/ 
                 http://www.virusite.org/archive/2020.2/genes.fasta.zip && 
-                unzip -d index.dir/VIRUS_GENOME VIRUS_GENOME/genes.fasta.zip
+                unzip -d index.dir/VIRUS_GENOME index.dir/VIRUS_GENOME/genes.fasta.zip
                 '''
 
     P.run(statement)
 
 @active_if(PARAMS['index_star'])
 @follows(mkdir("index.dir/star_index.dir"))
-@active_if(PARAMS['index_star'])
 @originate("index.dir/star_index.dir/Genome")
 def STAR_index(outfile):
 
@@ -188,7 +187,7 @@ def STAR_map(infile, outfile):
     if PARAMS['index_star']:
         index_genome = "index.dir/star_index.dir"
     else: 
-        index_genome = PARAMS['genome_dir']
+        index_genome = PARAMS['index_genome_dir']
             
 
     nthreads = PARAMS['star_nThreads']

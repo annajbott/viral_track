@@ -13,9 +13,12 @@ data: 0
 ################
 
 # Parameters for index
-index:  
-  # Logical, use star to build genome index or not, 0 for no, 1 to use star to build index
-  star: 0
+index:
+  # Logical use star to build index or not, 0 for no 1 to use star to build index
+  star: 1  
+
+  # Logical run wget for indexes
+  star_wget: 0
 
   # If not using star, location of pre-built index 
   genome_dir: /well/combat/projects/preprocess/VIRAL_TRACK/References/VIRAL_TRACK_REFERENCE_BUILD_273a
