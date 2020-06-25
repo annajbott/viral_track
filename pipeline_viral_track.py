@@ -207,6 +207,7 @@ def STAR_map(infile, outfile):
         E.warn("nThreadsort should not be greater than the number of threads for STAR mapping")
 
     
+    job_memory = "unlimited"
 
     statement = ''' STAR --runThreadN %(nthreads)s --outBAMsortingThreadN %(nBAMsortingthreads)s --outBAMsortingBinsN %(nBins)s 
                 --genomeDir %(index_genome)s --readFilesIn %(infile)s --outSAMattributes NH HI AS nM NM XS 
@@ -214,7 +215,6 @@ def STAR_map(infile, outfile):
                 --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6 --outFileNamePrefix %(prefix)s %(gunzip)s > %(log_file)s
                 '''
 
-    job_memory = "70G"
 
     P.run(statement)
 
@@ -286,6 +286,7 @@ def viral_filter(infile, outfile):
     
     P.run(statement)
 
+@follows(samtools_index)
 @transform(viral_filter,
            regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt"),
            add_inputs(STAR_map),
@@ -298,6 +299,7 @@ def viral_BAM(infiles, outfile):
 
     virus_name_file, aligned_bam = infiles
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
+    virus = virus.replace("-", "|")
 
     # The output file contains | which need to be escaped or maybe remove the | in the output files
 
@@ -336,11 +338,11 @@ def human_filter(infile, outfile):
     
     P.run(statement)
 
-
+@follows(samtools_index)
 @transform(human_filter,
            regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
            add_inputs(STAR_map),
-           r"STAR.dir/\1/Viral_BAM_files/\2.bam")
+           r"STAR.dir/\1/Human_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
     ''' 
     Takes human chromosome names from empty text files and aligned bam 

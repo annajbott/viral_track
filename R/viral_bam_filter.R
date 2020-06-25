@@ -18,6 +18,7 @@ minreads <- opt$minreads
 
 
 temp_chromosome_count = read.table(chromosome_count_path,header = F,row.names = 1)
+
 colnames(temp_chromosome_count) = c("Chromosome_length","Mapped_reads","Unknown")
 
 Chromosome_to_remove = c("1","10","11","12","13","14","15","16","17","18","19","2","20","21","22","3","4","5","6","7","8","9","MT","X","Y",
@@ -43,8 +44,9 @@ Chromosome_to_remove = c("1","10","11","12","13","14","15","16","17","18","19","
                           "KI270310.1","KI270412.1","KI270395.1","KI270376.1","KI270337.1","KI270335.1","KI270378.1","KI270379.1",
                           "KI270329.1","KI270419.1","KI270336.1","KI270312.1","KI270539.1","KI270385.1","KI270423.1","KI270392.1","KI270394.1")
 
-temp_chromosome_count = temp_chromosome_count[!rownames(temp_chromosome_count)%in%Chromosome_to_remove,] ##All viral "chromosome start with a "NC"
-temp_chromosome_count = temp_chromosome_count[temp_chromosome_count$Mapped_reads > opt$minreads,]
+temp_chromosome_count = temp_chromosome_count[!rownames(temp_chromosome_count)%in%Chromosome_to_remove,] 
+# All viral "chromosome start with a "NC"
+temp_chromosome_count = temp_chromosome_count[temp_chromosome_count$Mapped_reads > minreads,]
 write.csv(temp_chromosome_count, paste0(outdir, "/Virus_chromosomes_count_filtered.csv"), row.names = TRUE)
 
 # Create empty file with virus name as file name
@@ -54,11 +56,3 @@ for (virus in rownames(temp_chromosome_count)) {
     file.create(file_name)
 }
 
-
-# We then create one SAM file for each virus 
-#if(length(rownames(temp_chromosome_count))>1){
-#  foreach(i=rownames(temp_chromosome_count)) %dopar% {
-#    temp_export_bam_command = paste("samtools view -b ", bam_path," \'",i,"\'"," > \'", outdir,"/",i,".bam\'",sep = "")
-#    system(temp_export_bam_command)
-#  }
-#}
