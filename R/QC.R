@@ -26,6 +26,12 @@ pdf_name <- gsub("QC_unfiltered.txt", "QC_report.pdf", filter_outfile)
 temp_chromosome_count_path <- paste("STAR.dir/", sample_name, "_Count_chromosomes.txt",sep="")
 path_to_Log_file <- gsub("QC_unfiltered.txt", "Sample_Log.final.out", filter_outfile)
 
+logout <- dirname(path_to_Log_file)
+if (dir.exists(logout)){
+}else{dir.create(logout)
+}
+
+file.create(path_to_Log_file)
 
 # Load in auxillary functions
 source(paste(rdir, "/Module_viral_track.R", sep = "")) 
