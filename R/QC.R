@@ -42,11 +42,10 @@ if (length(temp_chromosome_count/2) <= 6){
 cl =makeCluster(N_thread)
 registerDoParallel(cl)
 
+# Switch pipes for hyphens to match BAM files
+virus_names = gsub("\\|","-",rownames(temp_chromosome_count))
 
-# Load in QC stuff, need to adjust for file and folder names
-# And sort out  most likely
-
-QC_result = foreach(i=rownames(temp_chromosome_count),.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
+QC_result = foreach(i=virus_names,.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
 	BAM_file= readGAlignments(paste(viraldir_path,"/",i,".bam",sep = ""),param = ScanBamParam(what =scanBamWhat()))
  
 	#Let's check the diversity of the reads

@@ -225,7 +225,7 @@ def STAR_map(infile, outfile):
 
 @transform(STAR_map,
            regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam.bai")
+           r"STAR.dir/\1/\2_Aligned.sortedByCoord.out.bam.bai")
 def samtools_index(infile, outfile):
     '''
     Index bam file using samtools
@@ -361,19 +361,26 @@ def human_BAM(infiles, outfile):
 # Quality control
 #######################
 
-# Need to finish R script ...
+@follows(mkdir("QC.dir"))
 @collate(viral_BAM,
         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
-        r"QC.dir/\1/QC_filtered.txt") # Fill in name
+        r"QC.dir/\1/QC_filtered.txt") 
 def viral_QC(infile, outfile):
     ''' 
     Performs quality control on viral BAM file
     '''
 
     viral_bam_directory = os.path.dirname(infile[0])
-    sample = viral_bam_directory.split("/")[1]
-    
-    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s'''
+    viral_bam_directory2 = viral_bam_directory.replace("./","")    
+    sample = viral_bam_directory2.split("/")[1]
+    os.mkdir("QC.dir/" + sample)
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
+    E.warn("============================================ hello here anna ==========")
+        
+    print(sample)
+    print(viral_bam_directory2)
+
+    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory2)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s'''
 
 
     P.run(statement)
