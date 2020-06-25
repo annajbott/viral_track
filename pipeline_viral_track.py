@@ -286,9 +286,11 @@ def viral_filter(infile, outfile):
     
     P.run(statement)
 
+
+@follows(samtools_index)
 @transform(viral_filter,
            regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt"),
-           add_inputs(STAR_map),
+           add_inputs([STAR_map]),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def viral_BAM(infiles, outfile):
     ''' 
@@ -297,12 +299,20 @@ def viral_BAM(infiles, outfile):
     '''
 
     virus_name_file, aligned_bam = infiles
+    name_inf = os.path.split(virus_name_file)[0].split("/")[2]
+    for bam in aligned_bam:
+        name = os.path.split(bam)[0].split("/")[2]
+        if name == name_inf:
+            correct_bam = bam
+        else:
+            pass
+
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
 
     # The output file contains | which need to be escaped or maybe remove the | in the output files
 
 
-    statement = """ samtools view -b %(aligned_bam)s '%(virus)s' > %(outfile)s """
+    statement = """ samtools view -b %(correct_bam)s '%(virus)s' > %(outfile)s """
 
     P.run(statement)
 
