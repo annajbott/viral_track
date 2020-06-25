@@ -367,9 +367,11 @@ def viral_QC(infile, outfile):
     ''' 
     Performs quality control on viral BAM file
     '''
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
 
     viral_bam_directory = os.path.dirname(infile[0])
-    sample = viral_bam_directory.split("/")[1]
+    sample = viral_bam_directory.split("/")[2]
+
     
     statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s'''
 

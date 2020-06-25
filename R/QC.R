@@ -46,7 +46,7 @@ registerDoParallel(cl)
 # Load in QC stuff, need to adjust for file and folder names
 # And sort out  most likely
 
-QC_result = foreach(i=rownames(temp_chromosome_count),.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
+QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
 	BAM_file= readGAlignments(paste(viraldir_path,"/",i,".bam",sep = ""),param = ScanBamParam(what =scanBamWhat()))
  
 	#Let's check the diversity of the reads
