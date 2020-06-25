@@ -150,7 +150,7 @@ def wget_viral_chromosomes(outfile):
 @active_if(PARAMS['index_star'])
 @follows(mkdir("index.dir/star_index.dir"))
 @active_if(PARAMS['index_star'])
-@originate("index.dir/star_index.dir/index")
+@originate("index.dir/star_index.dir/Genome")
 def STAR_index(outfile):
 
     '''
@@ -186,7 +186,7 @@ def STAR_map(infile, outfile):
     '''
     
     if PARAMS['index_star']:
-        index_genome = "index.dir/star.dir"
+        index_genome = "index.dir/star_index.dir"
     else: 
         index_genome = PARAMS['genome_dir']
             
@@ -194,7 +194,6 @@ def STAR_map(infile, outfile):
     nthreads = PARAMS['star_nThreads']
     nBAMsortingthreads = PARAMS['star_nThreadsort']
     nBins = PARAMS['star_bins']
-    index_genome = PARAMS['genome_dir']
     min_reads = PARAMS['star_minreads']
     prefix = outfile.replace("Aligned.sortedByCoord.out.bam", "")
     log_file = outfile.replace(".bam", ".log")
@@ -244,7 +243,7 @@ def samtools_index(infile, outfile):
 
 @transform(STAR_map,
            regex("(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"\1/\2_Count_chromsomes.txt")
+           r"\1/\2_Count_chromosomes.txt")
 def samtools_chromosome_count(infile, outfile):
     ''' 
     Compute the number of mapped reads for each chromosome/virus
@@ -252,7 +251,7 @@ def samtools_chromosome_count(infile, outfile):
 
     statement = '''samtools idxstats %(infile)s > %(outfile)s'''
 
-    job.memory = "20G"
+    job_memory = "20G"
 
     P.run(statement)
 
@@ -260,25 +259,31 @@ def samtools_chromosome_count(infile, outfile):
 # Filter out human and viruses
 ################################
 
-@transform(samtools_chromosome_count, 
-           regex("(\S+)/(\S+)_Count_chrosomes.txt"),
+@subdivide(samtools_chromosome_count, 
+           regex("(\S+)/(\S+)_Count_chromosomes.txt"),
            r"\1/Viral_BAM_files/virus_file_names/*.txt")
-def viral_filter(infiles, outfile):
+def viral_filter(infile, outfile):
     '''
     Uses R script to filter out human chromosomes and viruses
     under threshold number of reads, then create empty txt file for each virus 
     '''
-
     chromosome_count = infile
-    BAM_folder = os.path.dirname(os.path.dirname(outfile))
-    outdir = os.path.dirname(outfile)
-    minreads <- PARAMS['star_minreads']
+    BAM_folder = infile.replace(os.path.basename(infile), "") + "/Viral_BAM_files/"
+    outdir = infile.replace(os.path.basename(infile), "") + "/Viral_BAM_files/virus_file_names"
+    # for some reason ruffus complains that the output isnt a string - this is a tmp fix
+    outfile = str(outfile)
+    minreads = PARAMS['star_minreads']
 
-    os.mkdir(BAM_folder)
-    os.mkdir(outdir)
+    if os.path.exists(BAM_folder):
+        pass
+    else:
+        os.mkdir(BAM_folder)
+        os.mkdir(outdir)
+
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
 
     statement = '''Rscript %(R_ROOT)s/viral_bam_filter.R -c %(chromosome_count)s 
-                -m %(minreads)s -o %(outdir)s '''
+                -m %(minreads)s -o %(outdir)s'''
     
     P.run(statement)
 
@@ -295,33 +300,43 @@ def viral_BAM(infiles, outfile):
     virus_name_file, aligned_bam = infiles
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
 
+    # The output file contains | which need to be escaped or maybe remove the | in the output files
+
 
     statement = """ samtools view -b %(aligned_bam)s '%(virus)s' > %(outfile)s """
 
     P.run(statement)
 
 
-@transform(samtools_chromosome_count, 
-           regex("(\S+)/(\S+)_Count_chrosomes.txt"),
+@subdivide(samtools_chromosome_count, 
+           regex("(\S+)/(\S+)_Count_chromosomes.txt"),
            r"\1/Human_BAM_files/human_file_names/*.txt")
-def human_filter(infiles, outfile):
+def human_filter(infile, outfile):
     '''
     Uses R script to filter out anything not human and any chromosomes
     under threshold number of reads, then create empty txt file for each name 
     '''
 
     chromosome_count = infile
-    BAM_folder = os.path.dirname(os.path.dirname(outfile))
-    outdir = os.path.dirname(outfile)
-    minreads <- PARAMS['star_minreads']
+    BAM_folder = infile.replace(os.path.basename(infile), "") + "/Human_BAM_files/"
+    outdir = infile.replace(os.path.basename(infile), "") + "/Human_BAM_files/human_file_names"
+    # for some reason ruffus complains that the output isnt a string - this is a tmp fix
+    outfile = str(outfile)
+    minreads = PARAMS['star_minreads']
 
-    os.mkdir(BAM_folder)
-    os.mkdir(outdir)
+    if os.path.exists(BAM_folder):
+        pass
+    else:
+        os.mkdir(BAM_folder)
+        os.mkdir(outdir)
+
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
 
     statement = '''Rscript %(R_ROOT)s/human_bam_filter.R -c %(chromosome_count)s 
                 -m %(minreads)s -o %(outdir)s '''
     
     P.run(statement)
+
 
 @transform(human_filter,
            regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
