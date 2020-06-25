@@ -23,15 +23,9 @@ rdir <- opt$rRoot
 
 unfilter_outfile <- gsub("QC_unfiltered.txt", "QC_filtered.txt", filter_outfile)
 pdf_name <- gsub("QC_unfiltered.txt", "QC_report.pdf", filter_outfile)
-temp_chromosome_count_path <- paste("STAR.dir/", sample_name, "_Count_chromosomes.txt",sep="")
-path_to_Log_file <- gsub("QC_unfiltered.txt", "Sample_Log.final.out", filter_outfile)
-
-logout <- dirname(path_to_Log_file)
-if (dir.exists(logout)){
-}else{dir.create(logout)
-}
-
-file.create(path_to_Log_file)
+temp_chromosome_count_path <- paste("STAR.dir/", sample_name, "/", sample_name, "_Count_chromosomes.txt",sep="")
+path_to_Log_file <- gsub("QC_filtered.txt", "Sample_Log.final.out", filter_outfile)
+path_to_Log_file <- paste0("STAR.dir/", sample_name, "/", sample_name, "_Log.final.out")
 
 # Load in auxillary functions
 source(paste(rdir, "/Module_viral_track.R", sep = "")) 
@@ -100,6 +94,8 @@ QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine
               Viral_reads_contents_mean,Read_entropy,Spatial_distribution,Longest_contig,
               Mean_dust_score,Percent_high_quality_reads)
     }
+
+
 ## ------------------------------------------------------------------------------------
 ## Now we perform filtering based ont the Calculaed QC statsitics: 
 ## Editied by LEO -- otherwise fails if only one virus is detected as produces numeric vector rather than dataframe. 
