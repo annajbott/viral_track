@@ -351,7 +351,7 @@ def human_filter(infile, outfile):
 @transform(human_filter,
            regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
            add_inputs([STAR_map]),
-           r"STAR.dir/\1/Viral_BAM_files/\2.bam")
+           r"STAR.dir/\1/Human_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
     ''' 
     Takes human chromosome names from empty text files and aligned bam 
@@ -411,15 +411,15 @@ def merge_viruses(infiles, outfile):
 #############################
 
 @collate(human_BAM,
-         regex("STAR.dir/(\S+)/Human_BAM_files/\S+.bam"),
-         r"STAR.dir/(\S+)/merged_human_mapping.bam")
-def samtools_merge(infiles, outfile):
+         regex("STAR.dir/./(\S+)/./Human_BAM_files/\S+.bam"),
+         r"STAR.dir/\1/merged_human_mapping.bam")
+def samtools_merge(infile, outfile):
     '''
     Merge human chromsome BAM files using samtools
     '''
 
     path_to_BAM = os.path.dirname(infile[0])
-    infile_list = ' '.join(infiles)
+    infile_list = ' '.join(infile)
     
 
     statement = ''' samtools merge %(outfile)s -f %(infile_list)s '''
