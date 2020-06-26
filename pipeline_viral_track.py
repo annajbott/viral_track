@@ -350,7 +350,7 @@ def human_filter(infile, outfile):
 
 @transform(human_filter,
            regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
-           add_inputs(STAR_map),
+           add_inputs([STAR_map]),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
     ''' 
@@ -360,9 +360,16 @@ def human_BAM(infiles, outfile):
 
     human_name_file, aligned_bam = infiles
     human_chrom =  os.path.basename(human_name_file).replace(".txt", "")
+    
+    name_inf = os.path.split(human_name_file)[0].split("/")[2]
+    for bam in aligned_bam:
+        name = os.path.split(bam)[0].split("/")[2]
+        if name == name_inf:
+            correct_bam = bam
+        else:
+            pass
 
-
-    statement = """ samtools view -b %(aligned_bam)s '%(human_chrom)s' > %(outfile)s """
+    statement = """ samtools view -b %(correct_bam)s '%(human_chrom)s' > %(outfile)s """
 
     P.run(statement)
 
