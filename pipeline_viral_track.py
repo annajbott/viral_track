@@ -21,7 +21,7 @@ Any CGAT pipeline specific questions direct to anna.james-bott@st-hildas.ox.ac.u
 
 Requires:
 
-* fastq files 
+* Fastq files 
 * Reference genome 
 
 
@@ -170,6 +170,8 @@ def STAR_index(outfile):
 
     P.run(statement)
 
+
+
 #############################
 # STAR mapping and samtools
 #############################
@@ -220,7 +222,7 @@ def STAR_map(infile, outfile):
 
 
 ### Merge samples here ###
-## samtools merge, samtools sort
+## samtools merge, samtools sort, samtools index
 
 
 @transform(STAR_map,

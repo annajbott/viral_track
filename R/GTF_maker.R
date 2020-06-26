@@ -5,19 +5,10 @@
 ##           MUST BE RUN if gtf not provided or if the reference is rebuilt using different genomes. 
 ##           Contains genome name, length and then filler values for other GTF columns. 
 ##           Saved to ViralTrack_GTF.gtf
-## Author: Lauren Overend (LEO)
-##
-## Date Created: 2020 - June 
-##
-## Email: lauren.overend@oriel.ox.ac.uk
 ##
 ## ---------------------------
-##
-## Notes:
-##   
-##
-## ---------------------------
-#Making GTF for viral track from Choromosome Index: 
+
+# Making GTF for viral track from Choromosome Index: 
 library(optparse)
 parser <- OptionParser()
 option_list <- list( 
