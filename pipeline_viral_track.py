@@ -179,7 +179,7 @@ def STAR_index(outfile):
 @follows(STAR_index)
 @follows(mkdir("STAR.dir"))
 @transform(SEQUENCEFILES,
-           regex("(\S+).fa"),
+           regex("(\S+).fastq.gz"),
            r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam")
 def STAR_map(infile, outfile):
     '''
