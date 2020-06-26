@@ -160,7 +160,12 @@ def STAR_index(outfile):
     # In yml file contain param for any extra fastas (file location), e.g. covid19, "" if none
     extra_fasta = PARAMS['index_extra_fasta']
 
-    statement = ''' STAR --runThreadN %(nthreads)s --limitGenomeGenerateRAM 268822031285 --runMode genomeGenerate 
+    if PARAMS['index_star_limit_RAM']:
+        limit_genome = "--limitGenomeGenerateRAM " + str(PARAMS['index_star_limit_RAM'])
+    else:
+        limit_genome = ""
+
+    statement = ''' STAR --runThreadN %(nthreads)s %(limit_genome)s --runMode genomeGenerate 
                 --genomeDir index.dir/star_index.dir --genomeFastaFiles 
                 index.dir/VIRUS_GENOME/genes.fasta index.dir/HUMAN_GENOME/*.fa 
                 %(extra_fasta)s
