@@ -445,7 +445,7 @@ def feature_counts(infile, outfile):
     
     statement = ''' featureCounts -t transcript -M --primary -R BAM -g gene_id 
                     -a  %(gtf)s -o %(counts_file)s %(merged_bam)s && 
-                    mv "%(bam_out_og)s" "%(outfile)s" '''
+                    cp "%(bam_out_og)s" "%(outfile)s" '''
 
 
     P.run(statement)
@@ -492,11 +492,11 @@ def matrix_report(infile, outfile):
     Sparse matrix of features and folder containing 
     summarised results, e.g. QC filters and counts etc.
     '''
-
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
     sample_name = outfile.split('/')[1]
     outdir = os.path.dirname(outfile)
 
-    statement = ''' Rscript %(R_ROOT)s/mat.R (PROBS A DIF NAME) 
+    statement = ''' Rscript %(R_ROOT)s/matrix_maker.R 
                     -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
 
     P.run(statement)
