@@ -166,7 +166,7 @@ def STAR_index(outfile):
                 %(extra_fasta)s
                 '''
 
-    job_memory="100G"
+    job_memory="unlimited"
 
     P.run(statement)
 
