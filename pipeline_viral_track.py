@@ -308,6 +308,7 @@ def viral_BAM(infiles, outfile):
             pass
 
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
+    virus = virus.replace("-","|")
 
     # The output file contains | which need to be escaped or maybe remove the | in the output files
 
