@@ -94,8 +94,8 @@ QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine
               Viral_reads_contents_mean,Read_entropy,Spatial_distribution,Longest_contig,
               Mean_dust_score,Percent_high_quality_reads)
     }
-
-
+print("QC !!!!!!!!!!!!!")
+head(QC_result)
 ## ------------------------------------------------------------------------------------
 ## Now we perform filtering based ont the Calculaed QC statsitics: 
 ## Editied by LEO -- otherwise fails if only one virus is detected as produces numeric vector rather than dataframe. 
