@@ -382,7 +382,7 @@ def human_BAM(infiles, outfile):
 # Need to finish R script ...
 @collate(viral_BAM,
         regex("STAR.dir/(\S+)/Viral_BAM_files/\S+.bam"),
-        r"QC.dir/\1/QC_filtered.txt") # Fill in name
+        r"QC.dir/\1/QC_filtered.pdf") # Fill in name
 def viral_QC(infile, outfile):
     ''' 
     Performs quality control on viral BAM file
@@ -391,9 +391,9 @@ def viral_QC(infile, outfile):
 
     viral_bam_directory = os.path.dirname(infile[0])
     sample = viral_bam_directory.split("/")[2]
-
+    min_reads_mapped = PARAMS['min_reads_mapped']
     
-    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s'''
+    statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s -m %(min_reads_mapped)s'''
 
 
     P.run(statement)

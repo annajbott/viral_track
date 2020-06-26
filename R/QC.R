@@ -9,7 +9,8 @@ option_list <- list(
     make_option(c("-v", "--viraldir"), action="store", type="character", help="Path to vViral_BAM_directory"),
     make_option(c("-o", "--outfile"), action="store", type="character", help="Path to filtered outfile"),
     make_option(c("-s", "--sample"), action = "store", type="character", help="Sample name"),
-    make_option(c("-r", "--rRoot"), action ="store", type="character", help="Path to R directory in pipeline_viral_track repo")
+    make_option(c("-r", "--rRoot"), action ="store", type="character", help="Path to R directory in pipeline_viral_track repo"),
+    make_option(c("-m", "--minReadsMapped"), action ="store", type="character", help="Minimal reads mapped param")
 )
     
 
@@ -17,14 +18,15 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE) )
 viraldir_path <- opt$viraldir   
-filter_outfile <- opt$outfile
+outfile <- opt$outfile
 sample_name <- opt$sample
 rdir <- opt$rRoot
 
-unfilter_outfile <- gsub("QC_unfiltered.txt", "QC_filtered.txt", filter_outfile)
-pdf_name <- gsub("QC_unfiltered.txt", "QC_report.pdf", filter_outfile)
+filter_outfile <- gsub("QC_filtered.pdf", "QC_filtered.txt", outfile)
+unfilter_outfile <- gsub("QC_filtered.pdf", "QC_unfiltered.txt", outfile)
+pdf_name <- outfile
 temp_chromosome_count_path <- paste("STAR.dir/", sample_name, "/", sample_name, "_Count_chromosomes.txt",sep="")
-path_to_Log_file <- gsub("QC_filtered.txt", "Sample_Log.final.out", filter_outfile)
+path_to_Log_file <- gsub("QC_filtered.txt", "Sample_Log.final.out", unfilter_outfile)
 path_to_Log_file <- paste0("STAR.dir/", sample_name, "/", sample_name, "_Log.final.out")
 
 # Load in auxillary functions
@@ -45,21 +47,20 @@ registerDoParallel(cl)
 
 # Load in QC stuff, need to adjust for file and folder names
 # And sort out  most likely
-
 QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
 	BAM_file= readGAlignments(paste(viraldir_path,"/",i,".bam",sep = ""),param = ScanBamParam(what =scanBamWhat()))
- 
+ 	a = gsub("-", "|", i)
 	#Let's check the diversity of the reads
 	Viral_reads = unique(BAM_file@elementMetadata$seq)
 	Viral_reads_contents = alphabetFrequency(Viral_reads,as.prob =T )
 	Viral_reads_contents = Viral_reads_contents[,c("A","C","G","T")]
- 
-    #calculate percentage of nucleotides in the viral reads for Read Entropy
+
+	#calculate percentage of nucleotides in the viral reads for Read Entropy
 	Viral_reads_contents_mean =colMeans(Viral_reads_contents)
 	Read_entropy = sum(-log(Viral_reads_contents_mean)*Viral_reads_contents_mean,na.rm = T)
-  
+
 	#Caclulate the spatial distribution of the mapped reads : how much percent of the genome is mapped ?
-	Covered_genome = coverage(BAM_file)[[i]]
+	Covered_genome = coverage(BAM_file)[[a]]
 	Covered_genome = as.numeric(Covered_genome)
 	Spatial_distribution =sum(Covered_genome>0)/length(Covered_genome)
 	Covered_genome = rle(sign(Covered_genome))
@@ -167,7 +168,6 @@ Mapping_selected_virus = Mapping_selected_virus[order(Mapping_selected_virus$Uni
 
 ## ------------------------------------------------------------------------------------
 ## Plotting the Statisitics 
-
 ## Open PDF file: 
 pdf(pdf_name, height = 24, width = 20)
 par(las=0,mfrow=c(4,3),mar=c(6,6,6,4))
@@ -197,7 +197,7 @@ if (length(detected_virus) > 0) {
 # Plot Number of Reads > 50 (filtering threshold)
 plot(QC_result$N_reads,QC_result$Spatial_distribution*100,pch=21,bg=Color_vector,log="x",cex=1.5,xlab="Number of Mapped Reads",ylab="% Mapped genome",ylim=c(0,100),cex.lab=1.5,main="Viral Summary: Read Count")
 abline(h=5,lwd=2,lty=2,col="grey")
-abline(v=Minimal_read_mapped,lwd=2,lty=2,col="grey")
+abline(v=opt$minReadsMapped,lwd=2,lty=2,col="grey")
 
 # Plot Number of Unique Reads > 50 (filtering threshold)
 plot(QC_result$N_unique_reads,QC_result$Spatial_distribution*100,pch=21,bg=Color_vector,log="x",cex=1.5,xlab="Number of Uniquely Mapped Reads",ylab="% Mapped genome",ylim=c(0,100),cex.lab=1.5,main="Viral Summary: Unique Read Count")
@@ -211,6 +211,7 @@ abline(v=1.2,lwd=2,lty=2,col="grey")
 #Third QC for the viral hits 
 plot(QC_result$Longest_contig,QC_result$DUST_score,pch=21,bg=Color_vector, cex=1.5,xlab="Longest Contig (nt)",ylab="DUST Score",cex.lab=1.4,main="Viral Summary: DUST Score")
 abline(v=3*Mean_mapping_length,lwd=2,lty=2,col="grey")
+
 
 #Number of reads for each filtered virus
 if (length(detected_virus) > 0) {
