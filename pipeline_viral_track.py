@@ -216,7 +216,7 @@ def STAR_map(infile, outfile):
                 --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6 --outFileNamePrefix %(prefix)s %(gunzip)s > %(log_file)s
                 '''
 
-    job_memory = "70G"
+    job_memory = "unlimited"
 
     P.run(statement)
 
@@ -227,7 +227,7 @@ def STAR_map(infile, outfile):
 
 @transform(STAR_map,
            regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam.bai")
+           r"STAR.dir/\1/\2_Aligned.sortedByCoord.out.bam.bai")
 def samtools_index(infile, outfile):
     '''
     Index bam file using samtools
@@ -494,12 +494,18 @@ def matrix_report(infile, outfile):
     Sparse matrix of features and folder containing 
     summarised results, e.g. QC filters and counts etc.
     '''
+
     R_ROOT = os.path.join(os.path.dirname(__file__), "R")
     sample_name = outfile.split('/')[1]
     outdir = os.path.dirname(outfile)
 
+    if os.path.exists(outdir):
+        pass
+    else:
+        os.mkdir(outdir) 
+
     statement = ''' Rscript %(R_ROOT)s/matrix_maker.R 
-                    -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
+                -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
 
     P.run(statement)
 
