@@ -116,6 +116,8 @@ QC_result = QC_result[QC_result$N_unique_reads>0,]
 ## This Requires R auxillalry Functions: 
 Mapping_information = Extraction_Log_final(path_to_Log_file)
 Mean_mapping_length = Mapping_information$Length_vector[1]
+
+
 detected_virus = rownames(QC_result[QC_result$Sequence_entropy>1.2 & QC_result$Longest_contig>3*Mean_mapping_length & QC_result$Spatial_distribution>0.05,])
 
 ## Returning QC Metrics for viruses that passed Filtering 
@@ -182,6 +184,7 @@ barplot(Mapping_information$Rate_vector,col="black",names.arg = c("Mismatch rate
 Color_vector = c("darkred","grey")
 barplot(Ratio_host_virus,ylim=c(0,100),xlim=c(0,5),ylab="Mapping events (%)",col=Color_vector,cex.lab=1.5,cex.axis = 1.5, main = "Ratio of Host:Viral Mapping")
 legend(x = 1.5,y=50,legend = c("Viral mapping","Host mapping"),bty="n",fill = Color_vector[length(Color_vector):1],cex = 1.5)
+
 
 # First QC for the viral hits 
 if (length(detected_virus) == 0) {

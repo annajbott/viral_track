@@ -1,16 +1,11 @@
 ## ---------------------------
 ## Script name: VIRAL TRACK: MATRIX MAKER
 ## Function: Add-On from ViralTrack (@Pierre)
-##           Generate the ViralTrack demultiplexed MATRIX FILES from the output of UMI-tools countin viral_filtered_features directory. 
+##           Generate the ViralTrack demultiplexed MATRIX FILES from the output of UMI-tools countin viral_filtered_features directory.
 ##           The output will be: barcodes.tsv, a genomes.tsv and a viral_counts.mtx in sparse matrix form: similar to output of cell ranger.
-##           viral_counts.mtx will include Human demultiplexted raw counts and viral demultiplexed raw counts.    
-##           viral_counts.mtx will also include % human reads, %mitochondrial reads, % total viral reads and % of reads/virus passng QC thresholds. 
-##         
-## Author: Lauren Overend (LEO)
-##
-## Date Created: 2020 - June 
-##
-## Email: lauren.overend@oriel.ox.ac.uk
+##           viral_counts.mtx will include Human demultiplexted raw counts and viral demultiplexed raw counts.
+##           viral_counts.mtx will also include % human reads, %mitochondrial reads, % total viral reads and % of reads/virus passng QC thresholds.
+## 
 ##
 ## ---------------------------
 ##

@@ -21,7 +21,7 @@ Any CGAT pipeline specific questions direct to anna.james-bott@st-hildas.ox.ac.u
 
 Requires:
 
-* fastq files 
+* Fastq files 
 * Reference genome 
 
 
@@ -170,6 +170,8 @@ def STAR_index(outfile):
 
     P.run(statement)
 
+
+
 #############################
 # STAR mapping and samtools
 #############################
@@ -220,7 +222,7 @@ def STAR_map(infile, outfile):
 
 
 ### Merge samples here ###
-## samtools merge, samtools sort
+## samtools merge, samtools sort, samtools index
 
 
 @transform(STAR_map,
@@ -286,9 +288,11 @@ def viral_filter(infile, outfile):
     
     P.run(statement)
 
+
+@follows(samtools_index)
 @transform(viral_filter,
            regex("STAR.dir/(\S+)/Viral_BAM_files/virus_file_names/(\S+).txt"),
-           add_inputs(STAR_map),
+           add_inputs([STAR_map]),
            r"STAR.dir/\1/Viral_BAM_files/\2.bam")
 def viral_BAM(infiles, outfile):
     ''' 
@@ -297,12 +301,21 @@ def viral_BAM(infiles, outfile):
     '''
 
     virus_name_file, aligned_bam = infiles
+    name_inf = os.path.split(virus_name_file)[0].split("/")[2]
+    for bam in aligned_bam:
+        name = os.path.split(bam)[0].split("/")[2]
+        if name == name_inf:
+            correct_bam = bam
+        else:
+            pass
+
     virus =  os.path.basename(virus_name_file).replace(".txt", "")
+    virus = virus.replace("-","|")
 
     # The output file contains | which need to be escaped or maybe remove the | in the output files
 
 
-    statement = """ samtools view -b %(aligned_bam)s '%(virus)s' > %(outfile)s """
+    statement = """ samtools view -b %(correct_bam)s '%(virus)s' > %(outfile)s """
 
     P.run(statement)
 
@@ -339,8 +352,8 @@ def human_filter(infile, outfile):
 
 @transform(human_filter,
            regex("STAR.dir/(\S+)/Human_BAM_files/human_file_names/(\S+).txt"),
-           add_inputs(STAR_map),
-           r"STAR.dir/\1/Viral_BAM_files/\2.bam")
+           add_inputs([STAR_map]),
+           r"STAR.dir/\1/Human_BAM_files/\2.bam")
 def human_BAM(infiles, outfile):
     ''' 
     Takes human chromosome names from empty text files and aligned bam 
@@ -349,9 +362,16 @@ def human_BAM(infiles, outfile):
 
     human_name_file, aligned_bam = infiles
     human_chrom =  os.path.basename(human_name_file).replace(".txt", "")
+    
+    name_inf = os.path.split(human_name_file)[0].split("/")[2]
+    for bam in aligned_bam:
+        name = os.path.split(bam)[0].split("/")[2]
+        if name == name_inf:
+            correct_bam = bam
+        else:
+            pass
 
-
-    statement = """ samtools view -b %(aligned_bam)s '%(human_chrom)s' > %(outfile)s """
+    statement = """ samtools view -b %(correct_bam)s '%(human_chrom)s' > %(outfile)s """
 
     P.run(statement)
 
@@ -393,15 +413,15 @@ def merge_viruses(infiles, outfile):
 #############################
 
 @collate(human_BAM,
-         regex("STAR.dir/(\S+)/Human_BAM_files/\S+.bam"),
-         r"STAR.dir/(\S+)/merged_human_mapping.bam")
-def samtools_merge(infiles, outfile):
+         regex("STAR.dir/./(\S+)/./Human_BAM_files/\S+.bam"),
+         r"STAR.dir/\1/merged_human_mapping.bam")
+def samtools_merge(infile, outfile):
     '''
     Merge human chromsome BAM files using samtools
     '''
 
     path_to_BAM = os.path.dirname(infile[0])
-    infile_list = ' '.join(infiles)
+    infile_list = ' '.join(infile)
     
 
     statement = ''' samtools merge %(outfile)s -f %(infile_list)s '''
@@ -419,15 +439,15 @@ def feature_counts(infile, outfile):
     Perform feature counts on the merged BAM file
     '''
 
-    merged_bam, gtf = infiles
+    merged_bam, gtf = infile
     sample_name = merged_bam.split("/")[1]
     counts_file = "featureCounts.dir/" + sample_name + "/" + sample_name + "_counts.txt"
     # Move bam file to featurecounts folder and rename 
-    bam_out_og = merged_bam + ".featureCounts.bam"
+    bam_out_og = merged_bam
     
     statement = ''' featureCounts -t transcript -M --primary -R BAM -g gene_id 
                     -a  %(gtf)s -o %(counts_file)s %(merged_bam)s && 
-                    mv %(bam_out_og)s %(outfile)s '''
+                    cp "%(bam_out_og)s" "%(outfile)s" '''
 
 
     P.run(statement)
@@ -474,11 +494,11 @@ def matrix_report(infile, outfile):
     Sparse matrix of features and folder containing 
     summarised results, e.g. QC filters and counts etc.
     '''
-
+    R_ROOT = os.path.join(os.path.dirname(__file__), "R")
     sample_name = outfile.split('/')[1]
     outdir = os.path.dirname(outfile)
 
-    statement = ''' Rscript %(R_ROOT)s/mat.R (PROBS A DIF NAME) 
+    statement = ''' Rscript %(R_ROOT)s/matrix_maker.R 
                     -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
 
     P.run(statement)
