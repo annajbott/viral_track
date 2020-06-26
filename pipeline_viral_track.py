@@ -437,15 +437,15 @@ def feature_counts(infile, outfile):
     Perform feature counts on the merged BAM file
     '''
 
-    merged_bam, gtf = infiles
+    merged_bam, gtf = infile
     sample_name = merged_bam.split("/")[1]
     counts_file = "featureCounts.dir/" + sample_name + "/" + sample_name + "_counts.txt"
     # Move bam file to featurecounts folder and rename 
-    bam_out_og = merged_bam + ".featureCounts.bam"
+    bam_out_og = merged_bam
     
     statement = ''' featureCounts -t transcript -M --primary -R BAM -g gene_id 
                     -a  %(gtf)s -o %(counts_file)s %(merged_bam)s && 
-                    mv %(bam_out_og)s %(outfile)s '''
+                    mv "%(bam_out_og)s" "%(outfile)s" '''
 
 
     P.run(statement)
