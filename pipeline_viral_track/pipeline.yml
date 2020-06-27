@@ -19,6 +19,8 @@ index:
 
   # Logical run wget for indexes
   star_wget: 0
+  
+  star_limit_RAM: 0
 
   # If not using star, location of pre-built index 
   genome_dir: /well/combat/projects/preprocess/VIRAL_TRACK/References/VIRAL_TRACK_REFERENCE_BUILD_273a

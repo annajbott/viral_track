@@ -160,13 +160,18 @@ def STAR_index(outfile):
     # In yml file contain param for any extra fastas (file location), e.g. covid19, "" if none
     extra_fasta = PARAMS['index_extra_fasta']
 
-    statement = ''' STAR --runThreadN %(nthreads)s --limitGenomeGenerateRAM 268822031285 --runMode genomeGenerate 
+    if PARAMS['index_star_limit_RAM']:
+        limit_genome = "--limitGenomeGenerateRAM " + str(PARAMS['index_star_limit_RAM'])
+    else:
+        limit_genome = ""
+
+    statement = ''' STAR --runThreadN %(nthreads)s %(limit_genome)s --runMode genomeGenerate 
                 --genomeDir index.dir/star_index.dir --genomeFastaFiles 
                 index.dir/VIRUS_GENOME/genes.fasta index.dir/HUMAN_GENOME/*.fa 
                 %(extra_fasta)s
                 '''
 
-    job_memory="100G"
+    job_memory="unlimited"
 
     P.run(statement)
 
@@ -216,7 +221,7 @@ def STAR_map(infile, outfile):
                 --outFilterScoreMinOverLread 0.6 --outFilterMatchNminOverLread 0.6 --outFileNamePrefix %(prefix)s %(gunzip)s > %(log_file)s
                 '''
 
-    job_memory = "70G"
+    job_memory = "unlimited"
 
     P.run(statement)
 
@@ -492,12 +497,18 @@ def matrix_report(infile, outfile):
     Sparse matrix of features and folder containing 
     summarised results, e.g. QC filters and counts etc.
     '''
+
     R_ROOT = os.path.join(os.path.dirname(__file__), "R")
     sample_name = outfile.split('/')[1]
     outdir = os.path.dirname(outfile)
 
+    if os.path.exists(outdir):
+        pass
+    else:
+        os.mkdir(outdir) 
+
     statement = ''' Rscript %(R_ROOT)s/matrix_maker.R 
-                    -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
+                -s %(sample_name)s -o %(outdir)s -e %(infile)s '''
 
     P.run(statement)
 
