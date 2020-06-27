@@ -221,13 +221,9 @@ def STAR_map(infile, outfile):
     P.run(statement)
 
 
-### Merge samples here ###
-## samtools merge, samtools sort, samtools index
-
-
 @transform(STAR_map,
-           regex("STAR.dir/(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
-           r"STAR.dir/\1/\1_Aligned.sortedByCoord.out.bam.bai")
+           regex("STAR.dir/.(\S+)/(\S+)_Aligned.sortedByCoord.out.bam"),
+           r"STAR.dir/\2/\2_Aligned.sortedByCoord.out.bam.bai")
 def samtools_index(infile, outfile):
     '''
     Index bam file using samtools
@@ -393,6 +389,8 @@ def viral_QC(infile, outfile):
     sample = viral_bam_directory.split("/")[2]
     min_reads_mapped = PARAMS['min_reads_mapped']
     
+    job_memory = "70G"
+
     statement = '''Rscript %(R_ROOT)s/QC.R --viraldir %(viral_bam_directory)s -o %(outfile)s -r %(R_ROOT)s -s %(sample)s -m %(min_reads_mapped)s'''
 
 
