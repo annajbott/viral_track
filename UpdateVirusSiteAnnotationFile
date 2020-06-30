@@ -50,4 +50,4 @@ for (i in 1:length(all_genomes)){
 file_name <- paste0(opt$output, "/Updated_VirusSite_Reference.txt")
 write.table(df, file = paste0(opt$output, "/Updated_VirusSite_Reference.txt"), sep = "\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
 
-## DONT FORGET TO ADD CORONA ONCE MADE 
+## DONT FORGET TO ADD CORONA ONCE MADE AS THIS IS CURRENTLY NOT IN THE GENOMES.FA FILE
