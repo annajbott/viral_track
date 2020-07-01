@@ -393,6 +393,12 @@ def viral_QC(infile, outfile):
     viral_bam_directory = os.path.dirname(infile[0])
     sample = viral_bam_directory.split("/")[2]
     min_reads_mapped = PARAMS['min_reads_mapped']
+    qc_dir = os.path.basename(outfile)
+    
+    if os.path.exists(qc_dir):
+        pass
+    else:
+        os.mkdir(qc_dir)
     
     job_memory = "70G"
 
