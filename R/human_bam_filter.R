@@ -4,7 +4,7 @@ parser <- OptionParser()
 option_list <- list(
     make_option(c("-c", "--chromsomeCount"), action="store", type="character", help="Path to <sample>_Count_chromosomes.txt"),
     make_option(c("-o", "--outdir"), action="store", type="character", help="Path to out directory of Viral BAM files"),
-    make_option(c("-m", "--minreads", action="store", type="integer", default = 50, help="Minimum number of mapped viral reads, default = [default]")
+    make_option(c("-m", "--minreads"), action="store", type="integer", default = 50, help="Minimum number of mapped viral reads, default = [default]")
 )
     
 
@@ -20,9 +20,9 @@ colnames(temp_chromosome_count_2) = c("Chromosome_length","Mapped_reads","Unknow
 
 Human_chr = c("X","Y","MT",as.character(1:23))
 temp_chromosome_count_2 = temp_chromosome_count_2[rownames(temp_chromosome_count_2)%in%Human_chr,]
-temp_chromosome_count_2 = temp_chromosome_count_2[temp_chromosome_count_2$Mapped_reads>Minimal_read_mapped,]
+temp_chromosome_count_2 = temp_chromosome_count_2[temp_chromosome_count_2$Mapped_reads> opt$minreads,]
 
-write.csv(temp_chromosome_count_2, paste(outdir, "/human_chromosomes_count_filtered.csv", row.names = TRUE)
+write.csv(temp_chromosome_count_2, paste0(outdir, "/human_chromosomes_count_filtered.csv"), row.names = TRUE)
 
 # Create empty file with virus name as file name 
 for(chromosome in rownames(temp_chromosome_count_2)){

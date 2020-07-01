@@ -4,13 +4,8 @@
 ##           Generate the ViralTrack demultiplexed MATRIX FILES from the output of UMI-tools countin viral_filtered_features directory.
 ##           The output will be: barcodes.tsv, a genomes.tsv and a viral_counts.mtx in sparse matrix form: similar to output of cell ranger.
 ##           viral_counts.mtx will include Human demultiplexted raw counts and viral demultiplexed raw counts.
-##           viral_counts.mtx will also include % human reads, %mitochondrial reads, % total viral reads and % of reads/virus passng QC thresholds.
+##           viral_counts.mtx will also include % human reads, % mitochondrial reads, % total viral reads and % of reads/virus passng QC thresholds.
 ## 
-##
-## ---------------------------
-##
-## Notes:
-##   
 ##
 ## ---------------------------
 
@@ -25,9 +20,8 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser, print_help_and_exit = TRUE, args = commandArgs(trailingOnly = TRUE))
 
-## Create the Final Output directy: viral_filtered_features
+## Path of report directory: viral_filtered_features/<sample_name>
 MTX_dir = opt$outdir
-dir.create(MTX_dir)
 
 #Read non-sparse  Expression_table.tsv features from UMI-tools:
 file_tsv = opt$expressiontsv
