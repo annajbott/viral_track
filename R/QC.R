@@ -35,63 +35,49 @@ path_to_Log_file <- paste0("STAR.dir/", sample_name, "/", sample_name, "_Log.fin
 
 # Load in auxillary functions
 source(paste(rdir, "/Module_viral_track.R", sep = "")) 
-
 location_temp_chromsome_count <- paste(viraldir_path, "/virus_file_names/Virus_chromosomes_count_filtered.csv", sep ="")
 temp_chromosome_count <- read.csv(location_temp_chromsome_count, stringsAsFactors=FALSE, header = TRUE, row.names = 1)
-if (length(temp_chromosome_count/2) <= 6){
-	N_thread <- length(temp_chromosome_count/2)
-	} else {
-	N_thread == 6
-	}
-	
-##Make Parallelel Environment : Number of threads calculated on the number of unique viruses present 
-cl =makeCluster(N_thread)
-registerDoParallel(cl)
 
+# Running QC Calculation - Only needede if there are viral bam files: 
+# If no viral bam files, empty QC dataframe will be calculated. 
 dir <- paste(viraldir_path,sep = "")
 if(length(list.files(dir))==0){
-  cat("\t ----------------------------------------------\n", file=log, append=TRUE)
   cat(paste0("\t NO VIRUSES IDENFIFIED WITH MIN READS MAPPED >=", Minimal_read_mapped, ". \n"), file=log, append=TRUE)
   cat("\t NO QC VIRAL METRICS WILL BE CALCULTED. \n", file=log, append=TRUE)
-  cat("\t ----------------------------------------------\n", file=log, append=TRUE)
   }  
 
 if(length(list.files(dir))>0){
-  cat("\t ----------------------------------------------\n", file=log, append=TRUE)
   cat(paste0("\t ", length(list.files(dir)), " VIRUSES IDENFIFIED WITH MIN READS MAPPED >=", Minimal_read_mapped, ". \n"), file=log, append=TRUE)
   cat("\t QC VIRAL METRICS WILL BE CALCULTED. \n", file=log, append=TRUE)
-  cat("\t ----------------------------------------------\n", file=log, append=TRUE)
-
+  # Generate Empty QC report:
   QC_result <- NULL
-## Generation of the QC repor
+## Generation of the QC report:
   for(i in 1:length(rownames(temp_chromosome_count))) {
     z <- rownames(temp_chromosome_count)[i]
-
     z <- gsub("\\|", "-", z)
     BAM_file= readGAlignments(paste(viraldir_path,"/",z,".bam",sep = ""),param = ScanBamParam(what =scanBamWhat()))
 
-    #Let's check the diversity of the reads
+    #Read Diversity 
     Viral_reads = unique(BAM_file@elementMetadata$seq)
     Viral_reads_contents = alphabetFrequency(Viral_reads,as.prob =T )
     Viral_reads_contents = Viral_reads_contents[,c("A","C","G","T")]
     
-    #calculate percentage of nucleotides in the viral reads for Read Entropy
+    #Percentage of Nucleotides in the viral reads for Read Entropy
     # If only one reads present returns numeric vector rather than dataframe:
     if (class(Viral_reads_contents)=="numeric") {
       Viral_reads_contents = matrix(Viral_reads_contents_mean,ncol = 4)
-
     }
-    
     Viral_reads_contents_mean =colMeans(Viral_reads_contents)
     Read_entropy = sum(-log(Viral_reads_contents_mean)*Viral_reads_contents_mean,na.rm = T)
-    #Caclulate the spatial distribution of the mapped reads : how much percent of the genome is mapped ?
+	  
+    #Calculate the spatial distribution of the mapped reads : what percent of the genome is mapped ?
     Covered_genome = coverage(BAM_file)[[z]]
     Covered_genome = as.numeric(Covered_genome)
     Spatial_distribution =sum(Covered_genome>0)/length(Covered_genome)
     Covered_genome = rle(sign(Covered_genome))
     Longest_contig = max(Covered_genome$lengths[Covered_genome$values>0])
     
-    ##The mean reads quality
+    ##Calculate Mean Read Quality
     Reads_quality = as.character(BAM_file@elementMetadata$qual)
     Reads_quality = PhredQuality(Reads_quality)
     Reads_quality = as(Reads_quality,"IntegerList")
@@ -104,7 +90,7 @@ if(length(list.files(dir))>0){
     N_mapped_reads = length(BAM_file)
     Percent_uniquely_mapped = N_unique_mapped_reads/N_mapped_reads
     
-    ##DUSTy score identifies low-complexity sequences, in a manner inspired by the dust implementation in BLAST
+    ##DUSTY score identifies low-complexity sequences, in a manner inspired by the dust implementation in BLAST
     Mean_dust_score = NA
     Percent_high_quality_reads = NA
     if ("ShortRead"%in%installed.packages()){
@@ -127,6 +113,7 @@ if(length(list.files(dir))>0){
               Mean_dust_score=numeric(),Percent_high_quality_reads=numeric())
 }
 
+## PRESUMABLY CAN DELETE FROM HERE?????????????? But may need the same file folder names updating to the above.
 # Load in QC stuff, need to adjust for file and folder names
 # And sort out  most likely
 QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine = rbind,.packages = c("GenomicAlignments","ShortRead")) %dopar% {
@@ -181,7 +168,7 @@ QC_result = foreach(i=gsub("\\|", "-", rownames(temp_chromosome_count)),.combine
     }
 print("QC !!!!!!!!!!!!!")
 ## ------------------------------------------------------------------------------------
-
+## SCRIPT RESUMES CORRECTLY HERE!!!!!!!!!!!!!!!!!!!!!!!!!
 ## Now we perform filtering based ont the Calculated QC statsitics: 
 ## If one virus present QC result is numeric vector so we need to convert this. In all other cases QC_result is a dataframe. 
 
@@ -198,18 +185,16 @@ rownames(QC_result) = rownames(temp_chromosome_count)
 QC_result = QC_result[QC_result$N_unique_reads>0,]
 
 ### ------------------------------------------------------------------------------------
-## Now we need to extract information on the mapping by itself to get information about the QC
+## Now we need to extract information on the mapping to get information about the QC
 ## This Requires R auxillalry Functions: 
 path_to_Log_file = paste0(temp_output_dir, "/", name_target, "Log.final.out")
 Mapping_information = Extraction_Log_final(path_to_Log_file)
 Mean_mapping_length = Mapping_information$Length_vector[1]
-
-
+cat("\t 8. Filtering on QC Metrics. \n", file=log, append = TRUE)
 detected_virus = rownames(QC_result[QC_result$Sequence_entropy>1.2 & QC_result$Longest_contig>3*Mean_mapping_length & QC_result$Spatial_distribution>0.05,])
 
 ## Returning QC Metrics for viruses that passed Filtering 
 Filtered_QC=QC_result[detected_virus,]
-
 
 ##Exporting the tables of the QC analysis
 write.table(file = unfilter_outfile, x = QC_result, quote = F,sep = "\t")
@@ -222,16 +207,16 @@ write.table(file = filter_outfile, x = Filtered_QC, quote = F,sep = "\t")
 ## Calculating some additional Statistics needed for Plots: 
 
 ## Additional info : % of reads mapped to viral vs host
-Read_count_temp = read.table(temp_chromosome_count_path,header = F,row.names = 1)
+## Updated with new temp_chromosome_count_location (which is csv)
+Read_count_temp = read.csv(location_temp_chromsome_count, stringsAsFactors=FALSE, header = TRUE, row.names = 1)
 colnames(Read_count_temp) = c("Chromosome_length","Mapped_reads","Unknown")
 Read_count_temp = Read_count_temp[Read_count_temp$Mapped_reads!=0,]
 Read_count_temp$Chr <- rownames(Read_count_temp)
 
-## Need to rename human chr to append chr to make it easy to grep:
+## Need to rename human chromosomes, apending "chr" to make it easy to grep:
 for (x in 1:22){
   Read_count_temp[["Chr"]] <- with(Read_count_temp, ifelse(Chr == x , paste0("chr", Chr), Chr))
 }
-
 Read_count_temp[["Chr"]] <- with(Read_count_temp, ifelse(Chr == "X", paste0("chr", Chr), Chr))
 Read_count_temp[["Chr"]] <- with(Read_count_temp, ifelse(Chr == "Y", paste0("chr", Chr), Chr))
 Read_count_temp[["Chr"]] <- with(Read_count_temp, ifelse(Chr == "MT", paste0("chr", Chr), Chr))
@@ -252,8 +237,7 @@ Mapping_selected_virus = Mapping_selected_virus[order(Mapping_selected_virus$Uni
 
 ## ------------------------------------------------------------------------------------
 ## Plotting the Statisitics 
-Mapping_selected_virus$Name_id <- rownames(Mapping_selected_virus)
-
+## Merges By Ensembl ID to ensure VIRUS NAME is incoperated into data.frame for plotting
 Mapping_selected_virus$Name_id <- rownames(Mapping_selected_virus)
 
 if(length(Mapping_selected_virus[, 1])>0) {
@@ -293,20 +277,18 @@ barplot(Ratio_host_virus,ylim=c(0,100),xlim=c(0,5),ylab="Mapping events (%)",col
 legend(x = 1.5,y=50,legend = c("Viral mapping","Host mapping"),bty="n",fill = Color_vector[length(Color_vector):1],cex = 1.5)
 
 
-# First QC for the viral hits 
-if (length(detected_virus) == 0) {
-  Color_vector= string.to.colors(factor(rownames(QC_result)%in%detected_virus),colors = c("orange")) ##Viral sequences that passed QC : green
-}
-
+# First QC for the viral hits
+# Removed if strings to colours ==0 as it wont actually need to plot anything and this caused errors
 if (length(detected_virus) > 0) {
   Color_vector= string.to.colors(factor(rownames(QC_result)%in%detected_virus),colors = c("orange","green")) ##Viral sequences that passed QC : green
 }
 
 # Plot Number of Reads > 50 (filtering threshold)
-
-plot(QC_result$N_reads,QC_result$Spatial_distribution*100,pch=21,bg=Color_vector,log="x",cex=1.5,xlab="Number of Mapped Reads",ylab="% Mapped genome",ylim=c(0,100),cex.lab=1.5,main="Viral Summary: Read Count")
-abline(h=5,lwd=2,lty=2,col="grey")
-abline(v=opt$minReadsMapped,lwd=2,lty=2,col="grey")
+# Only Need to plot this stage if Mapping Selected virus contains more than one virus - hence addition of IF
+if(length(rownames(Mapping_selected_virus))>=1){
+  plot(QC_result$N_reads,QC_result$Spatial_distribution*100,pch=21,bg=Color_vector,log="x",cex=1.5,xlab="Number of Mapped Reads",ylab="% Mapped genome",ylim=c(0,100),cex.lab=1.5,main="Viral Summary: Read Count")
+  abline(h=5,lwd=2,lty=2,col="grey")
+  abline(v=Minimal_read_mapped,lwd=2,lty=2,col="grey")
 
   # Plot Number of Unique Reads > 50 (filtering threshold)
   plot(QC_result$N_unique_reads,QC_result$Spatial_distribution*100,pch=21,bg=Color_vector,log="x",cex=1.5,xlab="Number of Uniquely Mapped Reads",ylab="% Mapped genome",ylim=c(0,100),cex.lab=1.5,main="Viral Summary: Unique Read Count")
@@ -320,7 +302,6 @@ abline(v=opt$minReadsMapped,lwd=2,lty=2,col="grey")
   #Third QC for the viral hits 
   plot(QC_result$Longest_contig,QC_result$DUST_score,pch=21,bg=Color_vector, cex=1.5,xlab="Longest Contig (nt)",ylab="DUST Score",cex.lab=1.4,main="Viral Summary: DUST Score")
   abline(v=3*Mean_mapping_length,lwd=2,lty=2,col="grey")
-
 
 #Number of reads for each filtered virus
   if (length(detected_virus) > 0) {
@@ -338,3 +319,5 @@ abline(v=opt$minReadsMapped,lwd=2,lty=2,col="grey")
   }
 }
 dev.off()
+
+cat("QC PDF and Summary Statistics Done and Saved.  \n", file=log, append = TRUE)
