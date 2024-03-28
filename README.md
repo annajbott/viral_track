@@ -7,7 +7,7 @@ https://www.sciencedirect.com/science/article/pii/S0092867420305687
 
 https://github.com/PierreBSC/Viral-Track
 
-Adapted by Lauren Overend (Lauren.overend@oriel.ox.ac.uk) 
+Adapted by Lauren Overend (Lauren.overend@oriel.ox.ac.uk) and developed into a CGAT pipeline framework by Anna James-Bott
 
 
 Set parameter values using pipeline_viral_track/pipeline.yml file.
@@ -22,4 +22,4 @@ Requirements:
 - R-bundle-Bioconductor/3.9
 - Subread 1.6.4
 ```
-Any CGAT pipeline specific questions direct to anna.james-bott@st-hildas.ox.ac.uk
+
